@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 3,
+  "designSystem": "Cloud White",
+  "source": "design/DESIGN-CLOUD-WHITE.png",
+  "sourcePixelSize": { "width": 1672, "height": 941 },
+  "sourceSha256": "4c22d9feeedb0758b9db84b700380ebf99d7f1b6e3624a09db7a0ce8213d4b81",
+  "measurementNote": "Coordinates are zero-based source-image pixels. Bounds are measured approximations from a raster reference, not vector construction data. Derivations declare any source-pixel transformation and its exact output mapping.",
+  "artifactPolicy": "One evidence artifact per reusable visual element. No workflow-state, application-logic, or duplicate composition screenshots are included. Pure crops are lossless; the primary treatment joins two declared lossless source segments after removing the flag columns. Recreate components from DESOGN.md tokens; do not stretch these images into production UI.",
+  "contactSheet": "contact-sheet.png",
+  "artifacts": [
+    {
+      "id": "window-header-cloudy",
+      "file": "window-header-cloudy.png",
+      "sourceRect": { "x": 18, "y": 96, "width": 551, "height": 75 },
+      "pixelSize": { "width": 551, "height": 75 },
+      "visualElement": "window header",
+      "purpose": "Cloudy translucent title bar with enough source context to reveal its glass boundary.",
+      "reuseGuidance": "Inspect material and edge treatment; implement the header at 52–53px visual height and never stretch the raster.",
+      "notes": "Uses the cloudiest left-window header with neutral canvas above/beside it and a narrow body transition below."
+    },
+    {
+      "id": "header-separator-blue-wave",
+      "file": "header-separator-blue-wave.png",
+      "sourceRect": { "x": 582, "y": 148, "width": 506, "height": 15 },
+      "pixelSize": { "width": 506, "height": 15 },
+      "visualElement": "header separator",
+      "purpose": "Thin cyan-blue refraction wave separating header material from body material.",
+      "reuseGuidance": "Recreate as a subtle 1px core plus 4–8px glow; do not tile the crop.",
+      "notes": "Brightness fades toward the edges and the path varies vertically by only a few pixels."
+    },
+    {
+      "id": "service-menu-area",
+      "file": "service-menu-area.png",
+      "sourceRect": { "x": 582, "y": 160, "width": 190, "height": 637 },
+      "pixelSize": { "width": 190, "height": 637 },
+      "visualElement": "service/menu pane",
+      "purpose": "Pale-blue menu surface, control rhythm, selection material, and lower panel radius.",
+      "reuseGuidance": "Use as a visual-system sample for pane density and material, not as application data or a screen composition.",
+      "notes": "A single representative menu crop is retained because the pane material is shared across the source composition."
+    },
+    {
+      "id": "main-operational-area",
+      "file": "main-operational-area.png",
+      "sourceRect": { "x": 254, "y": 560, "width": 299, "height": 237 },
+      "pixelSize": { "width": 299, "height": 237 },
+      "visualElement": "main operational pane",
+      "purpose": "Content-free sample of the near-white operational glass, side outlines, and lower panel radii.",
+      "reuseGuidance": "Use for surface, border, and corner treatment only; layout and application content are specified in prose.",
+      "notes": "The lower blank portion of the left operational pane avoids headings, empty-state copy, metadata, progress, and buttons."
+    },
+    {
+      "id": "vertical-menu-separator",
+      "file": "vertical-menu-separator.png",
+      "sourceRect": { "x": 769, "y": 160, "width": 11, "height": 637 },
+      "pixelSize": { "width": 11, "height": 637 },
+      "visualElement": "vertical pane separator",
+      "purpose": "Narrow luminous trough between menu and operational panes.",
+      "reuseGuidance": "Implement as a 4–8px gap with low-contrast curved edge strokes, not as a dark rule.",
+      "notes": "The apparent divider is formed by adjacent panel edges plus light negative space."
+    },
+    {
+      "id": "button-primary",
+      "file": "button-primary.png",
+      "sourceRect": { "x": 34, "y": 322, "width": 207, "height": 70 },
+      "pixelSize": { "width": 176, "height": 70 },
+      "derivation": {
+        "type": "lossless-column-removal",
+        "removedElement": "US flag",
+        "removedColumns": { "x": 23, "width": 31 },
+        "segments": [
+          {
+            "source": { "x": 0, "y": 0, "width": 23, "height": 70 },
+            "output": { "x": 0, "y": 0, "width": 23, "height": 70 }
+          },
+          {
+            "source": { "x": 54, "y": 0, "width": 153, "height": 70 },
+            "output": { "x": 23, "y": 0, "width": 153, "height": 70 }
+          }
+        ]
+      },
+      "visualElement": "filled primary treatment",
+      "purpose": "High-contrast blue liquid-glass primary treatment sampled from the selected English menu control, including the cyan rim, blue face, highlights, radius, and shadow.",
+      "reuseGuidance": "Use only as a primary or selected-control appearance sample; the English label, checkmark, width, and menu semantics are source context, not a component contract.",
+      "notes": "The 31 source columns containing the flag are removed and the two remaining source-exact segments are joined. No pixels are synthesized, blurred, interpolated, scaled, or lossily encoded."
+    },
+    {
+      "id": "button-secondary",
+      "file": "button-secondary.png",
+      "sourceRect": { "x": 1332, "y": 718, "width": 267, "height": 47 },
+      "pixelSize": { "width": 267, "height": 47 },
+      "visualElement": "secondary button",
+      "purpose": "Outlined blue secondary-button material and radius.",
+      "reuseGuidance": "Use as a secondary-button appearance sample; button meaning and label come from the consuming screen.",
+      "notes": "Thin blue stroke over a translucent near-white glass face."
+    },
+    {
+      "id": "footer",
+      "file": "footer.png",
+      "sourceRect": { "x": 18, "y": 776, "width": 551, "height": 48 },
+      "pixelSize": { "width": 551, "height": 48 },
+      "visualElement": "window footer termination",
+      "purpose": "Shared full-width bottom shell termination with both panes, center trough, lower frame, radii, and shadow.",
+      "reuseGuidance": "Use for lower shell geometry only; it contains no footer controls and has no workflow-state meaning.",
+      "notes": "Uses the content-free left window and includes neutral canvas below so the outer shadow is visible."
+    }
+  ]
+}
