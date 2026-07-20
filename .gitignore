@@ -9,6 +9,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+node_modules/
 build/
 develop-eggs/
 dist/
@@ -81,4 +82,3 @@ cython_debug/
 
 # Visual Studio Code
 tempCodeRunnerFile.py
-

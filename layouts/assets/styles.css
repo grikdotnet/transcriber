@@ -95,7 +95,7 @@ button {
   padding: 0 7px 0 9px;
   margin-left: -4px;
   background-color: var(--color-header);
-  background-image: url("./images/header-cloudy-background-line-free.png?v=6");
+  background-image: url("../images/header-cloudy-background-line-free.png?v=6");
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
@@ -115,7 +115,7 @@ button {
   bottom: -1px;
   left: var(--radius-panel);
   height: 1px;
-  background-image: url("./images/header-cloudy-edge.png?v=1");
+  background-image: url("../images/header-cloudy-edge.png?v=1");
   background-size: 100% 100%;
   background-repeat: no-repeat;
   pointer-events: none;
@@ -250,7 +250,7 @@ button {
   position: relative;
   color: #fff;
   background-color: transparent;
-  background-image: url("./images/button-primary-selected-smooth.png?v=1");
+  background-image: url("../images/button-primary-selected-smooth.png?v=1");
   background-size: 100% 100%;
   background-repeat: no-repeat;
   border: 0;
@@ -448,7 +448,7 @@ button {
   height: 100%;
   display: block;
   background-color: var(--color-primary);
-  background-image: url("./images/progress-material.png");
+  background-image: url("../images/progress-material.png");
   background-size: 100% 100%;
   border-radius: inherit;
   transition: width 80ms linear;
@@ -475,7 +475,7 @@ button {
 .primary-action {
   color: #fff;
   background-color: transparent;
-  background-image: url("./images/button-primary-wide-smooth.png?v=1");
+  background-image: url("../images/button-primary-wide-smooth.png?v=1");
   background-size: 100% 100%;
   background-repeat: no-repeat;
   border: 0;
