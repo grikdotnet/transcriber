@@ -4,7 +4,6 @@
   --color-primary-pressed: #0059d9;
   --color-primary-edge: #00c7fa;
   --color-window: rgba(245, 249, 253, 0.95);
-  --color-header: rgba(232, 236, 241, 0.91);
   --color-menu: rgba(240, 243, 249, 0.95);
   --color-content: rgba(250, 250, 252, 0.97);
   --color-control: rgba(247, 250, 253, 0.95);
@@ -72,7 +71,7 @@ button {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: 0 4px 4px;
+  padding: 4px;
   background: var(--color-window);
   border: 1px solid rgba(173, 189, 207, 0.86);
   border-radius: var(--radius-window);
@@ -83,56 +82,22 @@ button {
   backdrop-filter: blur(24px) saturate(115%);
 }
 
-.titlebar {
-  position: relative;
-  z-index: 2;
-  width: calc(100% + 8px);
-  height: 53px;
-  flex: 0 0 53px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 7px 0 9px;
-  margin-left: -4px;
-  background-color: var(--color-header);
-  background-image: url("../images/header-cloudy-background-line-free.png?v=6");
-  background-size: 100% 100%;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-origin: border-box;
-  background-clip: padding-box;
-  border: 1px solid rgba(190, 204, 221, 0.58);
-  border-radius: 15px 15px var(--radius-panel) var(--radius-panel);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(28px) saturate(115%);
-}
-
-.titlebar::after {
-  content: "";
-  position: absolute;
-  z-index: 3;
-  right: var(--radius-panel);
-  bottom: -1px;
-  left: var(--radius-panel);
-  height: 1px;
-  background-image: url("../images/header-cloudy-edge.png?v=1");
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  pointer-events: none;
-}
-
-.titlebar__identity {
+.language-panel__identity {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
+  margin: 0 5px 18px;
+  padding-bottom: 17px;
   color: #202735;
-  font-size: 12px;
-  font-weight: 400;
+  border-bottom: 1px solid rgba(196, 208, 222, 0.72);
+  font-size: 14px;
+  font-weight: 600;
   line-height: 1.4;
+  letter-spacing: -0.015em;
 }
 
-.titlebar__mark {
+.language-panel__mark {
   width: 32px;
   height: 32px;
   flex: 0 0 32px;
@@ -146,7 +111,7 @@ button {
     inset 0 0 0 1px rgba(133, 180, 235, 0.14);
 }
 
-.titlebar__mark img {
+.language-panel__mark img {
   width: 100%;
   height: 100%;
   display: block;
@@ -161,7 +126,6 @@ button {
   flex: 1;
   display: flex;
   gap: 4px;
-  padding-top: 4px;
 }
 
 .language-panel,
@@ -179,7 +143,7 @@ button {
   z-index: 2;
   width: 190px;
   flex: 0 0 190px;
-  padding: 20px 13px 18px;
+  padding: 15px 13px 18px;
   background: rgba(238, 242, 248, 0.88);
   border-color: rgba(205, 215, 228, 0.68);
   box-shadow:
@@ -527,7 +491,6 @@ button {
 
 @media (prefers-reduced-transparency: reduce) {
   .app-window,
-  .titlebar,
   .language-panel,
   .content-panel {
     backdrop-filter: none;
