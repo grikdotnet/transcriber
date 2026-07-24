@@ -5,125 +5,111 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
     <title>Model downloads</title>
-    <link rel="stylesheet" href="./assets/styles.css?v=15">
+    <link rel="stylesheet" href="./assets/styles.css?v=16">
   </head>
   <body>
-    <main class="prototype-canvas" aria-label="Model download prototype">
-      <article class="app-window" data-app="model-download" data-current-view="select" aria-labelledby="window-title">
-        <div class="window-body">
-          <aside class="language-panel" data-region="language-panel" aria-labelledby="languages-heading">
-            <div class="language-panel__identity">
-              <span class="language-panel__mark" aria-hidden="true">
-                <img src="./images/jjinni-header-full.jpeg?v=1" alt="" width="32" height="32">
-              </span>
-              <span id="window-title">Model downloads</span>
-            </div>
-
-            <h2 id="languages-heading">Languages</h2>
-
-            <button class="auto-detect-row" type="button" data-action="select-language" data-language="auto" aria-pressed="false">
-              <img src="./images/icon-globe.png" alt="" width="20" height="20" aria-hidden="true">
-              <span>Auto detect</span>
-            </button>
-
-            <div class="language-list" aria-label="Available languages">
-              <button class="language-row" type="button" data-action="select-language" data-language="en" aria-pressed="false">
-                <img class="language-row__flag" src="./images/flag-en.png" alt="" width="24" height="18">
-                <span>English</span>
-                <img class="language-row__check" src="./images/icon-check.png" alt="" width="18" height="18" aria-hidden="true" hidden>
-              </button>
-
-              <button class="language-row" type="button" data-action="select-language" data-language="es" aria-pressed="false">
-                <img class="language-row__flag" src="./images/flag-es.png" alt="" width="24" height="18">
-                <span>Spanish</span>
-              </button>
-
-              <button class="language-row" type="button" data-action="select-language" data-language="de" aria-pressed="false">
-                <img class="language-row__flag" src="./images/flag-de.png" alt="" width="24" height="18">
-                <span>German</span>
-              </button>
-
-              <button class="language-row" type="button" data-action="select-language" data-language="fr" aria-pressed="false">
-                <img class="language-row__flag" src="./images/flag-fr.png" alt="" width="24" height="18">
-                <span>French</span>
-              </button>
-
-              <button class="language-row" type="button" data-action="select-language" data-language="ja" aria-pressed="false">
-                <img class="language-row__flag" src="./images/flag-ja.png" alt="" width="24" height="18">
-                <span>Japanese</span>
-              </button>
-
-              <button class="language-row" type="button" data-action="select-language" data-language="uk" aria-pressed="false">
-                <img class="language-row__flag" src="./images/flag-uk.png" alt="" width="24" height="18">
-                <span>Ukrainian</span>
-              </button>
-            </div>
-
-          </aside>
-
-          <section class="content-panel" data-region="content-panel" aria-live="polite">
-            <section class="state-view select-view" data-view="select" aria-labelledby="select-heading">
-              <div class="state-heading">
-                <h1 id="select-heading">Download a model</h1>
-                <p>Choose the language you want to recognize.</p>
-              </div>
-
-              <div class="empty-state">
-                <img class="empty-state__icon" src="./images/icon-cloud-download.png" alt="" width="72" height="72" aria-hidden="true">
-                <p>Select a language to see<br>its recommended model</p>
-              </div>
-            </section>
-
-            <section class="state-view model-view ready-view" data-view="ready" aria-labelledby="ready-heading" hidden>
-              <h1 id="ready-heading">English model</h1>
-
-              <dl class="model-metadata">
-                <div class="metadata-row"><dt>Model name</dt><dd>Whisper Large v3 Turbo</dd></div>
-                <div class="metadata-row"><dt>Size</dt><dd>1.6 GB</dd></div>
-                <div class="metadata-row"><dt>Languages supported</dt><dd>99 languages</dd></div>
-                <div class="metadata-row"><dt>RAM / VRAM</dt><dd>6 GB / 4 GB</dd></div>
-                <div class="metadata-row"><dt>License</dt><dd>MIT</dd></div>
-                <div class="metadata-row"><dt>Status</dt><dd>Not installed</dd></div>
-              </dl>
-
-              <div class="action-dock">
-                <button class="primary-action" type="button" data-action="download">
-                  <span class="primary-action__label">Download</span>
-                </button>
-              </div>
-            </section>
-
-            <section class="state-view model-view downloading-view" data-view="downloading" aria-labelledby="downloading-heading" hidden>
-              <h1 id="downloading-heading">English model</h1>
-
-              <dl class="model-metadata">
-                <div class="metadata-row"><dt>Model name</dt><dd>Whisper Large v3 Turbo</dd></div>
-                <div class="metadata-row"><dt>Size</dt><dd>1.6 GB</dd></div>
-                <div class="metadata-row"><dt>Languages supported</dt><dd>99 languages</dd></div>
-                <div class="metadata-row"><dt>RAM / VRAM</dt><dd>6 GB / 4 GB</dd></div>
-                <div class="metadata-row"><dt>License</dt><dd>MIT</dd></div>
-                <div class="metadata-row metadata-row--status">
-                  <dt>Status</dt>
-                  <dd><span class="status-dot" aria-hidden="true"></span>Downloading</dd>
-                </div>
-              </dl>
-
-              <div class="download-progress" aria-live="polite">
-                <p class="download-progress__percentage" data-progress-percentage>68%</p>
-                <p class="download-progress__transferred" data-progress-transferred>1.1 GB of 1.6 GB</p>
-                <p class="download-progress__eta" data-progress-eta>About 2 min remaining</p>
-                <div class="progress-track" role="progressbar" aria-label="Model download progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="68" aria-valuetext="68%, 1.1 GB of 1.6 GB">
-                  <span class="progress-fill" data-progress-fill></span>
-                </div>
-              </div>
-
-              <div class="action-dock">
-                <button class="secondary-action" type="button" data-action="cancel">Cancel</button>
-              </div>
-            </section>
-          </section>
+    <main class="app-window" data-app="model-download" data-current-view="select" aria-labelledby="window-title">
+      <aside class="language-panel" data-region="language-panel" aria-labelledby="languages-heading">
+        <div class="language-panel__identity">
+          <img class="app-logo" src="./images/jjinni-header-full.jpeg?v=1" alt="" width="32" height="32">
+          <span id="window-title">Model downloads</span>
         </div>
-      </article>
+
+        <h2 id="languages-heading">Languages</h2>
+
+        <button class="auto-detect-row" type="button" data-action="select-language" data-language="auto" aria-pressed="false">
+          <img src="./images/icon-globe.png" alt="" width="20" height="20" aria-hidden="true">
+          <span>Auto detect</span>
+        </button>
+
+        <div class="language-list" aria-label="Available languages">
+          <button class="language-row" type="button" data-action="select-language" data-language="en" aria-pressed="false">
+            <img class="language-row__flag" src="./images/flag-en.png" alt="" width="24" height="18">
+            <span>English</span>
+            <img class="language-row__check" src="./images/icon-check.png" alt="" width="18" height="18" aria-hidden="true" hidden>
+          </button>
+
+          <button class="language-row" type="button" data-action="select-language" data-language="es" aria-pressed="false">
+            <img class="language-row__flag" src="./images/flag-es.png" alt="" width="24" height="18">
+            <span>Spanish</span>
+          </button>
+
+          <button class="language-row" type="button" data-action="select-language" data-language="de" aria-pressed="false">
+            <img class="language-row__flag" src="./images/flag-de.png" alt="" width="24" height="18">
+            <span>German</span>
+          </button>
+
+          <button class="language-row" type="button" data-action="select-language" data-language="fr" aria-pressed="false">
+            <img class="language-row__flag" src="./images/flag-fr.png" alt="" width="24" height="18">
+            <span>French</span>
+          </button>
+
+          <button class="language-row" type="button" data-action="select-language" data-language="ja" aria-pressed="false">
+            <img class="language-row__flag" src="./images/flag-ja.png" alt="" width="24" height="18">
+            <span>Japanese</span>
+          </button>
+
+          <button class="language-row" type="button" data-action="select-language" data-language="uk" aria-pressed="false">
+            <img class="language-row__flag" src="./images/flag-uk.png" alt="" width="24" height="18">
+            <span>Ukrainian</span>
+          </button>
+        </div>
+
+      </aside>
+
+      <section class="content-panel" data-region="content-panel" aria-live="polite">
+        <section class="state-view select-view" data-view="select" aria-labelledby="select-heading">
+          <h1 id="select-heading">Download a model</h1>
+          <p class="intro">Choose the language you want to recognize.</p>
+
+          <div class="empty-state">
+            <img class="empty-state__icon" src="./images/icon-cloud-download.png" alt="" width="72" height="72" aria-hidden="true">
+            <p>Select a language to see<br>its recommended model</p>
+          </div>
+        </section>
+
+        <section class="state-view model-view ready-view" data-view="ready" aria-labelledby="ready-heading" hidden>
+          <h1 id="ready-heading">English model</h1>
+
+          <dl class="model-metadata">
+            <div class="metadata-row"><dt>Model name</dt><dd>Whisper Large v3 Turbo</dd></div>
+            <div class="metadata-row"><dt>Size</dt><dd>1.6 GB</dd></div>
+            <div class="metadata-row"><dt>Languages supported</dt><dd>99 languages</dd></div>
+            <div class="metadata-row"><dt>RAM / VRAM</dt><dd>6 GB / 4 GB</dd></div>
+            <div class="metadata-row"><dt>License</dt><dd>MIT</dd></div>
+            <div class="metadata-row"><dt>Status</dt><dd>Not installed</dd></div>
+          </dl>
+
+          <button class="primary-action" type="button" data-action="download">Download</button>
+        </section>
+
+        <section class="state-view model-view downloading-view" data-view="downloading" aria-labelledby="downloading-heading" hidden>
+          <h1 id="downloading-heading">English model</h1>
+
+          <dl class="model-metadata">
+            <div class="metadata-row"><dt>Model name</dt><dd>Whisper Large v3 Turbo</dd></div>
+            <div class="metadata-row"><dt>Size</dt><dd>1.6 GB</dd></div>
+            <div class="metadata-row"><dt>Languages supported</dt><dd>99 languages</dd></div>
+            <div class="metadata-row"><dt>RAM / VRAM</dt><dd>6 GB / 4 GB</dd></div>
+            <div class="metadata-row"><dt>License</dt><dd>MIT</dd></div>
+            <div class="metadata-row metadata-row--status">
+              <dt>Status</dt>
+              <dd><span class="status-dot" aria-hidden="true"></span>Downloading</dd>
+            </div>
+          </dl>
+
+          <div class="download-progress" aria-live="polite">
+            <p class="download-progress__percentage" data-progress-percentage>68%</p>
+            <p class="download-progress__transferred" data-progress-transferred>1.1 GB of 1.6 GB</p>
+            <p class="download-progress__eta" data-progress-eta>About 2 min remaining</p>
+            <div class="progress-track" role="progressbar" aria-label="Model download progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="68" aria-valuetext="68%, 1.1 GB of 1.6 GB">
+              <span class="progress-fill" data-progress-fill></span>
+            </div>
+          </div>
+
+          <button class="secondary-action" type="button" data-action="cancel">Cancel</button>
+        </section>
+      </section>
     </main>
 
     <script src="./assets/app.js?v=1"></script>
