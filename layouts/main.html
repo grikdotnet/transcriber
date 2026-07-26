@@ -5,200 +5,193 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
     <title>Transcriber</title>
-    <link rel="stylesheet" href="./assets/main.css?v=18">
+    <link rel="stylesheet" href="./assets/main.css?v=19">
   </head>
   <body>
-    <main class="main-prototype-canvas" aria-label="Transcriber main-screen prototype">
-      <article class="main-window" data-app="transcriber-main" data-current-view="ready" aria-labelledby="main-window-title">
-        <header class="main-titlebar" data-region="titlebar">
-          <div class="main-titlebar__identity">
-            <span class="main-titlebar__mark" aria-hidden="true">
-              <img src="./images/jjinni-header-full.jpeg?v=1" alt="" width="32" height="32">
-            </span>
-            <span id="main-window-title">Transcriber</span>
+    <main class="main-window" data-app="transcriber-main" data-current-view="ready" aria-labelledby="main-window-title">
+      <div class="app-identity">
+        <img class="app-icon" src="./images/jjinni-header-full.jpeg?v=1" alt="" width="32" height="32">
+        <span id="main-window-title">Transcriber</span>
+      </div>
+
+      <div class="main-window__content" aria-live="polite">
+        <section class="main-state-view ready-view" data-view="ready" aria-labelledby="ready-section-heading">
+          <div class="setup-toolbar" role="toolbar" aria-label="Transcription setup">
+            <button class="main-control main-control--file" type="button" data-action="open-file" aria-label="Open file">
+              <img src="./images/icons/folder.svg" alt="" aria-hidden="true">
+              <span>Open file</span>
+            </button>
+
+            <label class="main-field">
+              <span>Language</span>
+              <select data-field="language" aria-label="Transcription language">
+                <option>Auto detect</option>
+                <option>English</option>
+                <option>Spanish</option>
+                <option>German</option>
+                <option>French</option>
+              </select>
+            </label>
+
+            <div class="main-field main-field--speakers">
+              <span>Speakers</span>
+              <div class="speaker-control" role="group" aria-label="Speaker count">
+                <span>Auto</span>
+                <button type="button" data-action="decrease-speakers" aria-label="Decrease speaker count">
+                  <img src="./images/icons/minus.svg" alt="">
+                </button>
+                <output data-speaker-count>2</output>
+                <button type="button" data-action="increase-speakers" aria-label="Increase speaker count">
+                  <img src="./images/icons/plus.svg" alt="">
+                </button>
+              </div>
+            </div>
+
+            <button class="main-primary-action" type="button" data-action="transcribe" aria-label="Transcribe">
+              <img src="./images/icons/activity.svg" alt="" aria-hidden="true">
+              <span>Transcribe</span>
+            </button>
           </div>
 
-        </header>
+          <div class="file-status-row">
+            <img class="file-status-row__icon" src="./images/icons/film.svg" alt="" aria-hidden="true">
+            <strong>meeting-recording.mp4</strong>
+            <span class="file-meta">00:02:14&nbsp;&nbsp;•&nbsp;&nbsp;28.6 MB&nbsp;&nbsp;•&nbsp;&nbsp;MP4</span>
+            <span class="file-state file-state--ready"><img src="./images/icons/check-circle-fill.svg" alt="" aria-hidden="true">Ready</span>
+          </div>
 
-        <div class="main-window__content" aria-live="polite">
-          <section class="main-state-view ready-view" data-view="ready" aria-labelledby="ready-section-heading">
-            <div class="setup-toolbar" role="toolbar" aria-label="Transcription setup">
-              <button class="main-control main-control--file" type="button" data-action="open-file">
-                <img src="./images/icons/folder.svg" alt="" aria-hidden="true">
-                <span>Open file</span>
-              </button>
-
-              <label class="main-field">
-                <span>Language</span>
-                <select data-field="language" aria-label="Transcription language">
-                  <option>Auto detect</option>
-                  <option>English</option>
-                  <option>Spanish</option>
-                  <option>German</option>
-                  <option>French</option>
-                </select>
-              </label>
-
-              <div class="main-field">
-                <span>Speakers</span>
-                <div class="speaker-control" role="group" aria-label="Speaker count">
-                  <span>Auto</span>
-                  <button type="button" data-action="decrease-speakers" aria-label="Decrease speaker count">
-                    <img src="./images/icons/minus.svg" alt="">
-                  </button>
-                  <output data-speaker-count>2</output>
-                  <button type="button" data-action="increase-speakers" aria-label="Increase speaker count">
-                    <img src="./images/icons/plus.svg" alt="">
-                  </button>
-                </div>
+          <section class="transcript-workspace" aria-labelledby="ready-section-heading">
+            <div class="workspace-heading">
+              <h1 id="ready-section-heading">Recognized text</h1>
+              <div class="workspace-tools" aria-label="Transcript display tools">
+                <button type="button" aria-label="Text size">Aa</button>
+                <button type="button" aria-label="Expand transcript"><img src="./images/icons/maximize-2.svg" alt=""></button>
               </div>
-
-              <button class="main-primary-action" type="button" data-action="transcribe">
-                <img src="./images/icons/activity.svg" alt="" aria-hidden="true">
-                <span>Transcribe</span>
-              </button>
             </div>
 
-            <div class="file-status-row">
-              <img class="file-status-row__icon" src="./images/icons/film.svg" alt="" aria-hidden="true">
-              <strong>meeting-recording.mp4</strong>
-              <span class="file-meta">00:02:14&nbsp;&nbsp;•&nbsp;&nbsp;28.6 MB&nbsp;&nbsp;•&nbsp;&nbsp;MP4</span>
-              <span class="file-state file-state--ready"><img src="./images/icons/check-circle-fill.svg" alt="" aria-hidden="true">Ready</span>
+            <div class="empty-transcript">
+              <img src="./images/main-audio-document.png" alt="" aria-hidden="true">
+              <p>Your transcript will appear here</p>
+              <span>Start transcription to see the result here.</span>
             </div>
-
-            <section class="transcript-workspace" aria-labelledby="ready-section-heading">
-              <div class="workspace-heading">
-                <h1 id="ready-section-heading">Recognized text</h1>
-                <div class="workspace-tools" aria-label="Transcript display tools">
-                  <button type="button" aria-label="Text size">Aa</button>
-                  <button type="button" aria-label="Expand transcript"><img src="./images/icons/maximize-2.svg" alt=""></button>
-                </div>
-              </div>
-
-              <div class="empty-transcript">
-                <img src="./images/main-audio-document.png" alt="" aria-hidden="true">
-                <p>Your transcript will appear here</p>
-                <span>Start transcription to see the result here.</span>
-              </div>
-            </section>
           </section>
+        </section>
 
-          <section class="main-state-view processing-view" data-view="processing" aria-labelledby="processing-section-heading" hidden>
-            <div class="setup-toolbar setup-toolbar--processing" role="toolbar" aria-label="Transcription setup">
-              <button class="main-control main-control--file" type="button" disabled>
-                <img src="./images/icons/folder.svg" alt="" aria-hidden="true">
-                <span>Open file</span>
-              </button>
+        <section class="main-state-view processing-view" data-view="processing" aria-labelledby="processing-section-heading" hidden>
+          <div class="setup-toolbar setup-toolbar--processing" role="toolbar" aria-label="Transcription setup">
+            <button class="main-control main-control--file" type="button" aria-label="Open file" disabled>
+              <img src="./images/icons/folder.svg" alt="" aria-hidden="true">
+              <span>Open file</span>
+            </button>
 
-              <label class="main-field">
-                <span>Language</span>
-                <select aria-label="Transcription language" disabled><option>Auto detect</option></select>
-              </label>
+            <label class="main-field">
+              <span>Language</span>
+              <select aria-label="Transcription language" disabled><option>Auto detect</option></select>
+            </label>
 
-              <div class="main-field">
-                <span>Speakers</span>
-                <div class="speaker-control" aria-label="Speaker count">
-                  <span>Auto</span>
-                  <button type="button" disabled><img src="./images/icons/minus.svg" alt=""></button>
-                  <output>2</output>
-                  <button type="button" disabled><img src="./images/icons/plus.svg" alt=""></button>
-                </div>
+            <div class="main-field main-field--speakers">
+              <span>Speakers</span>
+              <div class="speaker-control" aria-label="Speaker count">
+                <span>Auto</span>
+                <button type="button" disabled><img src="./images/icons/minus.svg" alt=""></button>
+                <output>2</output>
+                <button type="button" disabled><img src="./images/icons/plus.svg" alt=""></button>
               </div>
-
-              <button class="main-secondary-action setup-cancel" type="button" data-action="cancel">Cancel</button>
             </div>
 
-            <div class="file-status-row">
-              <img class="file-status-row__icon" src="./images/icons/film.svg" alt="" aria-hidden="true">
-              <strong>meeting-recording.mp4</strong>
-              <span class="file-meta">00:02:14&nbsp;&nbsp;•&nbsp;&nbsp;28.6 MB&nbsp;&nbsp;•&nbsp;&nbsp;MP4</span>
-              <span class="file-state file-state--processing"><img class="processing-dot" src="./images/icons/record-circle-fill.svg" alt="" aria-hidden="true">Processing</span>
+            <button class="main-secondary-action setup-cancel" type="button" data-action="cancel">Cancel</button>
+          </div>
+
+          <div class="file-status-row">
+            <img class="file-status-row__icon" src="./images/icons/film.svg" alt="" aria-hidden="true">
+            <strong>meeting-recording.mp4</strong>
+            <span class="file-meta">00:02:14&nbsp;&nbsp;•&nbsp;&nbsp;28.6 MB&nbsp;&nbsp;•&nbsp;&nbsp;MP4</span>
+            <span class="file-state file-state--processing"><img class="processing-dot" src="./images/icons/record-circle-fill.svg" alt="" aria-hidden="true">Processing</span>
+          </div>
+
+          <section class="transcript-workspace processing-workspace" aria-labelledby="processing-section-heading">
+            <div class="workspace-heading">
+              <h1 id="processing-section-heading">Transcribing recording</h1>
+              <div class="workspace-tools" aria-label="Transcript display tools">
+                <button type="button" aria-label="Text size">Aa</button>
+                <button type="button" aria-label="Expand transcript"><img src="./images/icons/maximize-2.svg" alt=""></button>
+              </div>
             </div>
 
-            <section class="transcript-workspace processing-workspace" aria-labelledby="processing-section-heading">
-              <div class="workspace-heading">
-                <h1 id="processing-section-heading">Transcribing recording</h1>
-                <div class="workspace-tools" aria-label="Transcript display tools">
-                  <button type="button" aria-label="Text size">Aa</button>
-                  <button type="button" aria-label="Expand transcript"><img src="./images/icons/maximize-2.svg" alt=""></button>
-                </div>
+            <div class="processing-content">
+              <ol class="processing-steps" aria-label="Transcription stages">
+                <li class="is-done"><img src="./images/icons/check-circle-fill.svg" alt=""><span>Loading model</span></li>
+                <li class="is-done"><img src="./images/icons/check-circle-fill.svg" alt=""><span>Extracting audio</span></li>
+                <li class="is-current" aria-current="step"><img src="./images/icons/record-circle-fill.svg" alt=""><span>Transcribing</span></li>
+                <li><img src="./images/icons/circle.svg" alt=""><span>Post-processing</span></li>
+              </ol>
+
+              <div class="processing-metric">
+                <span>Transcribing</span>
+                <strong data-processing-percentage>62%</strong>
               </div>
 
-              <div class="processing-content">
-                <ol class="processing-steps" aria-label="Transcription stages">
-                  <li class="is-done"><img src="./images/icons/check-circle-fill.svg" alt=""><span>Loading model</span></li>
-                  <li class="is-done"><img src="./images/icons/check-circle-fill.svg" alt=""><span>Extracting audio</span></li>
-                  <li class="is-current" aria-current="step"><img src="./images/icons/record-circle-fill.svg" alt=""><span>Transcribing</span></li>
-                  <li><img src="./images/icons/circle.svg" alt=""><span>Post-processing</span></li>
-                </ol>
-
-                <div class="processing-metric">
-                  <span>Transcribing</span>
-                  <strong data-processing-percentage>62%</strong>
-                </div>
-
-                <div class="main-progress-track" role="progressbar" aria-label="Transcription progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="62" aria-valuetext="62%, transcribing">
-                  <span class="main-progress-fill" data-processing-fill></span>
-                </div>
-
-                <div class="processing-time"><span>Elapsed 01:42</span><span>Estimated total 03:10</span></div>
+              <div class="main-progress-track" role="progressbar" aria-label="Transcription progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="62" aria-valuetext="62%, transcribing">
+                <span class="main-progress-fill" data-processing-fill></span>
               </div>
-            </section>
+
+              <div class="processing-time"><span>Elapsed 01:42</span><span>Estimated total 03:10</span></div>
+            </div>
           </section>
+        </section>
 
-          <section class="main-state-view complete-view" data-view="complete" aria-labelledby="complete-section-heading" hidden>
-            <div class="complete-toolbar" role="toolbar" aria-label="Transcript actions">
-              <button class="main-primary-action complete-toolbar__save" type="button" data-action="save">
-                <img src="./images/icons/download.svg" alt="" aria-hidden="true">
-                <span>Save as</span>
-              </button>
-              <button class="main-secondary-action" type="button" data-action="translate">
-                <img src="./images/icons/globe.svg" alt="" aria-hidden="true">
-                <span>Translate</span>
-              </button>
-              <button class="main-secondary-action" type="button" data-action="cancel">Cancel</button>
+        <section class="main-state-view complete-view" data-view="complete" aria-labelledby="complete-section-heading" hidden>
+          <div class="complete-toolbar" role="toolbar" aria-label="Transcript actions">
+            <button class="main-primary-action complete-toolbar__save" type="button" data-action="save">
+              <img src="./images/icons/download.svg" alt="" aria-hidden="true">
+              <span>Save as</span>
+            </button>
+            <button class="main-secondary-action" type="button" data-action="translate">
+              <img src="./images/icons/globe.svg" alt="" aria-hidden="true">
+              <span>Translate</span>
+            </button>
+            <button class="main-secondary-action" type="button" data-action="cancel">Cancel</button>
+          </div>
+
+          <div class="file-status-row">
+            <img class="file-status-row__icon" src="./images/icons/film.svg" alt="" aria-hidden="true">
+            <strong>meeting-recording.mp4</strong>
+            <span class="file-meta">00:02:14&nbsp;&nbsp;•&nbsp;&nbsp;28.6 MB&nbsp;&nbsp;•&nbsp;&nbsp;MP4</span>
+            <span class="file-state file-state--complete"><img src="./images/icons/check-circle-fill.svg" alt="" aria-hidden="true">Complete</span>
+          </div>
+
+          <section class="transcript-workspace complete-workspace" aria-labelledby="complete-section-heading">
+            <div class="workspace-heading">
+              <h1 id="complete-section-heading">Transcript playback</h1>
+              <div class="workspace-tools" aria-label="Transcript display tools">
+                <button type="button" aria-label="Text size">Aa</button>
+                <button type="button" aria-label="Expand transcript"><img src="./images/icons/maximize-2.svg" alt=""></button>
+              </div>
             </div>
 
-            <div class="file-status-row">
-              <img class="file-status-row__icon" src="./images/icons/film.svg" alt="" aria-hidden="true">
-              <strong>meeting-recording.mp4</strong>
-              <span class="file-meta">00:02:14&nbsp;&nbsp;•&nbsp;&nbsp;28.6 MB&nbsp;&nbsp;•&nbsp;&nbsp;MP4</span>
-              <span class="file-state file-state--complete"><img src="./images/icons/check-circle-fill.svg" alt="" aria-hidden="true">Complete</span>
+            <div class="playback-card">
+              <img class="playback-card__thumbnail" src="./images/main-meeting-thumbnail.png" alt="Two coworkers discussing a recording at a table">
+              <button class="play-button" type="button" data-action="toggle-play" aria-label="Play transcript recording">
+                <img src="./images/icons/play.svg" alt="">
+              </button>
+              <div class="playback-card__time"><strong data-playback-time>00:06</strong><span>/ 02:14</span></div>
+              <button class="playback-speed" type="button" aria-label="Playback speed">1×</button>
+              <img class="playback-waveform" src="./images/main-playback-waveform.png" alt="Audio waveform with playback position at 27 percent">
             </div>
 
-            <section class="transcript-workspace complete-workspace" aria-labelledby="complete-section-heading">
-              <div class="workspace-heading">
-                <h1 id="complete-section-heading">Transcript playback</h1>
-                <div class="workspace-tools" aria-label="Transcript display tools">
-                  <button type="button" aria-label="Text size">Aa</button>
-                  <button type="button" aria-label="Expand transcript"><img src="./images/icons/maximize-2.svg" alt=""></button>
-                </div>
-              </div>
-
-              <div class="playback-card">
-                <img class="playback-card__thumbnail" src="./images/main-meeting-thumbnail.png" alt="Two coworkers discussing a recording at a table">
-                <button class="play-button" type="button" data-action="toggle-play" aria-label="Play transcript recording">
-                  <img src="./images/icons/play.svg" alt="">
-                </button>
-                <div class="playback-card__time"><strong data-playback-time>00:06</strong><span>/ 02:14</span></div>
-                <button class="playback-speed" type="button" aria-label="Playback speed">1×</button>
-                <img class="playback-waveform" src="./images/main-playback-waveform.png" alt="Audio waveform with playback position at 27 percent">
-              </div>
-
-              <div class="transcript-scroll" tabindex="0" aria-label="Editable transcript">
-                <article class="transcript-segment">
-                  <header><time datetime="PT0S">00:00</time><span class="speaker-badge speaker-badge--one">Speaker 1</span><button type="button" aria-label="More options for Speaker 1"><img src="./images/icons/more-horizontal.svg" alt=""></button></header>
-                  <p contenteditable="true" aria-label="Transcript at 00:00">We should be able to <mark>review the recording and</mark> <mark>export</mark> the transcript after correction.</p>
-                </article>
-                <article class="transcript-segment">
-                  <header><time datetime="PT8S">00:08</time><span class="speaker-badge speaker-badge--two">Speaker 2</span><button type="button" aria-label="More options for Speaker 2"><img src="./images/icons/more-horizontal.svg" alt=""></button></header>
-                  <p contenteditable="true" aria-label="Transcript at 00:08">Yes, keep the result editable and easy to scan.</p>
-                </article>
-              </div>
-            </section>
+            <div class="transcript-scroll" tabindex="0" aria-label="Editable transcript">
+              <article class="transcript-segment">
+                <header><time datetime="PT0S">00:00</time><span class="speaker-badge speaker-badge--one">Speaker 1</span><button type="button" aria-label="More options for Speaker 1"><img src="./images/icons/more-horizontal.svg" alt=""></button></header>
+                <p contenteditable="true" aria-label="Transcript at 00:00">We should be able to <mark>review the recording and</mark> <mark>export</mark> the transcript after correction.</p>
+              </article>
+              <article class="transcript-segment">
+                <header><time datetime="PT8S">00:08</time><span class="speaker-badge speaker-badge--two">Speaker 2</span><button type="button" aria-label="More options for Speaker 2"><img src="./images/icons/more-horizontal.svg" alt=""></button></header>
+                <p contenteditable="true" aria-label="Transcript at 00:08">Yes, keep the result editable and easy to scan.</p>
+              </article>
+            </div>
           </section>
-        </div>
-      </article>
+        </section>
+      </div>
     </main>
 
     <script src="./assets/main.js?v=1"></script>
