@@ -10,6 +10,11 @@ const [html, css] = await Promise.all([
   readFile(cssPath, "utf8"),
 ]);
 
+function ruleBody(selector) {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return css.match(new RegExp(`${escapedSelector}\\s*\\{([^}]*)\\}`))?.[1];
+}
+
 test("the app shell directly contains the identity and fluid content", () => {
   assert.match(
     html,
@@ -45,15 +50,62 @@ test("the app and main area fill the available window", () => {
   );
 });
 
-test("state controls use one fixed-height floating material menu at the top", () => {
+test("state controls use one compact menu directly below the title", () => {
   assert.match(
     css,
-    /\.setup-toolbar,\s*\.complete-toolbar\s*\{[^}]*\bposition:\s*absolute;[^}]*\bright:\s*16px;[^}]*\btop:\s*16px;[^}]*\bleft:\s*16px;[^}]*\bheight:\s*72px;[^}]*\bborder-radius:\s*20px;/s,
+    /\.setup-toolbar,\s*\.complete-toolbar\s*\{[^}]*\bposition:\s*absolute;[^}]*\bright:\s*16px;[^}]*\btop:\s*0;[^}]*\bleft:\s*16px;[^}]*\bheight:\s*53px;/s,
   );
   assert.match(
     css,
-    /\.main-state-view\s*\{[^}]*\bpadding-top:\s*104px;/s,
+    /\.main-state-view\s*\{[^}]*\bpadding-top:\s*69px;/s,
   );
+});
+
+test("state toolbars are transparent and each setup control owns its surface", () => {
+  const toolbarRule = css.match(
+    /\.setup-toolbar,\s*\.complete-toolbar\s*\{([^}]*)\}/,
+  )?.[1];
+  const controlSurfaceRule = css.match(
+    /\.main-field select,\s*\.main-control,\s*\.speaker-control\s*\{([^}]*)\}/,
+  )?.[1];
+
+  assert.ok(toolbarRule, "missing shared state toolbar rule");
+  assert.match(toolbarRule, /\bbackground:\s*transparent;/);
+  assert.match(toolbarRule, /\bborder:\s*0;/);
+  assert.match(toolbarRule, /\bbox-shadow:\s*none;/);
+  assert.match(toolbarRule, /\bbackdrop-filter:\s*none;/);
+
+  assert.ok(controlSurfaceRule, "missing shared setup control surface rule");
+  assert.match(controlSurfaceRule, /\bbackground:\s*rgba\(/);
+  assert.match(controlSurfaceRule, /\bborder:\s*1px solid /);
+  assert.match(controlSurfaceRule, /\bborder-radius:\s*14px;/);
+});
+
+test("language and speaker fields share the same fixed control height", () => {
+  const sharedControlRule = css.match(
+    /\.main-field select,\s*\.main-control,\s*\.speaker-control,\s*\.main-primary-action,\s*\.main-secondary-action\s*\{([^}]*)\}/,
+  )?.[1];
+
+  assert.ok(sharedControlRule, "missing shared control sizing rule");
+  assert.match(sharedControlRule, /\bheight:\s*38px;/);
+  assert.match(sharedControlRule, /\bflex:\s*0 0 38px;/);
+  assert.doesNotMatch(
+    css,
+    /\.speaker-control\s*\{[^}]*\bflex:\s*1;/,
+    "speaker-specific styles must not override the shared control height",
+  );
+});
+
+test("file status uses an inset liquid-glass card", () => {
+  const fileStatusRule = ruleBody(".file-status-row");
+
+  assert.ok(fileStatusRule, "missing .file-status-row rule");
+  assert.match(fileStatusRule, /\bmargin:\s*0 16px;/);
+  assert.match(fileStatusRule, /\bbackground:\s*rgba\(/);
+  assert.match(fileStatusRule, /\bborder:\s*1px solid /);
+  assert.match(fileStatusRule, /\bborder-radius:\s*16px;/);
+  assert.match(fileStatusRule, /\bbox-shadow:/);
+  assert.match(fileStatusRule, /\bbackdrop-filter:\s*blur\(/);
 });
 
 test("the optimized stylesheet has no custom properties", () => {
@@ -68,6 +120,10 @@ test("compact windows keep every dock action visible", () => {
   assert.match(
     css,
     /@media \(max-width: 480px\)[\s\S]*?\.main-control,[\s\S]*?min-width:\s*44px;/,
+  );
+  assert.match(
+    css,
+    /@media \(max-width: 480px\)[\s\S]*?\.setup-toolbar,\s*\.complete-toolbar\s*\{[^}]*\btop:\s*0;/,
   );
   assert.match(
     html,

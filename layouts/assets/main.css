@@ -90,7 +90,7 @@ img {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding-top: 104px;
+  padding-top: 69px;
   background: #fff;
 }
 
@@ -99,22 +99,18 @@ img {
   position: absolute;
   z-index: 3;
   right: 16px;
-  top: 16px;
+  top: 0;
   left: 16px;
-  height: 72px;
+  height: 53px;
   display: flex;
   align-items: end;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 0 12px;
   overflow-x: auto;
-  background: rgba(241, 246, 252, 0.9);
-  border: 1px solid rgba(184, 201, 220, 0.72);
-  border-radius: 20px;
-  box-shadow:
-    0 14px 32px rgba(33, 55, 82, 0.18),
-    0 3px 8px rgba(33, 55, 82, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(20px) saturate(140%);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .complete-toolbar {
@@ -143,14 +139,18 @@ img {
 .main-secondary-action {
   height: 38px;
   flex: 0 0 38px;
-  border-radius: 11px;
+  border-radius: 14px;
 }
 
 .main-field select,
 .main-control,
 .speaker-control {
-  background-color: rgba(255, 255, 255, 0.84);
-  border: 1px solid #c9d3e1;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(166, 183, 204, 0.8);
+  border-radius: 14px;
+  box-shadow:
+    0 3px 10px rgba(33, 55, 82, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
 }
 
 .main-field select {
@@ -199,7 +199,6 @@ img {
 
 .speaker-control {
   min-width: 132px;
-  flex: 1;
   gap: 5px;
   padding: 0 7px 0 12px;
 }
@@ -302,8 +301,15 @@ img {
   grid-template-columns: 22px auto 1fr auto;
   align-items: center;
   gap: 12px;
+  margin: 0 16px;
   padding: 0 24px;
-  border-bottom: 1px solid #e2e6ec;
+  background: rgba(241, 246, 252, 0.76);
+  border: 1px solid rgba(184, 201, 220, 0.68);
+  border-radius: 16px;
+  box-shadow:
+    0 10px 26px rgba(33, 55, 82, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(18px) saturate(135%);
   font-size: 12px;
 }
 
@@ -689,10 +695,10 @@ img {
   .setup-toolbar,
   .complete-toolbar {
     right: 10px;
-    top: 10px;
+    top: 0;
     left: 10px;
     gap: 6px;
-    padding: 8px;
+    padding: 0;
     overflow: hidden;
   }
 
@@ -748,8 +754,12 @@ img {
     padding-inline: 14px;
   }
 
+  .file-status-row {
+    margin-inline: 10px;
+  }
+
   .main-state-view {
-    padding-top: 92px;
+    padding-top: 63px;
   }
 
   .processing-steps li {
@@ -784,8 +794,7 @@ img {
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .setup-toolbar,
-  .complete-toolbar {
+  .file-status-row {
     background: #f1f6fc;
     backdrop-filter: none;
   }
