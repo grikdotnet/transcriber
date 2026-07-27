@@ -106,7 +106,6 @@ img {
   align-items: end;
   gap: 12px;
   padding: 0 12px;
-  overflow-x: auto;
   background: transparent;
   border: 0;
   box-shadow: none;
@@ -251,8 +250,17 @@ img {
 }
 
 .main-primary-action {
+  height: 50px;
   color: #fff;
-  background: #086cf7;
+  background-color: transparent;
+  background-image: url("../images/button-primary-wide-smooth.png");
+  background-position: center 4px;
+  background-repeat: no-repeat;
+  background-size: 100% 48px;
+}
+
+.setup-toolbar > .main-primary-action {
+  transform: translateY(6px)
 }
 
 .main-primary-action img {
@@ -260,7 +268,7 @@ img {
 }
 
 .main-primary-action:hover {
-  background: #0065d8;
+  filter: brightness(0.96);
 }
 
 .main-secondary-action {
@@ -276,6 +284,26 @@ img {
 
 .main-secondary-action:hover {
   background: #fff;
+}
+
+.complete-toolbar__translate {
+  color: #fff;
+  background: #00b92c;
+  border: 2px solid #00751a;
+  box-shadow:
+    inset 0 0 0 2px #20eb45,
+    inset 0 3px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -10px 14px rgba(0, 78, 18, 0.28),
+    0 7px 14px rgba(0, 117, 26, 0.3);
+  text-shadow: 0 1px 1px rgba(0, 76, 17, 0.55);
+}
+
+.complete-toolbar__translate:hover {
+  background: #00a927;
+}
+
+.complete-toolbar__translate img {
+  filter: brightness(0) invert(1);
 }
 
 .setup-toolbar--processing .main-control:disabled,
