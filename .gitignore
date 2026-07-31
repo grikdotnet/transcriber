@@ -1,4 +1,5 @@
 .*
+!.specify/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -7,6 +8,7 @@ __pycache__/
 
 # C extensions
 *.so
+*.dll
 
 # Distribution / packaging
 node_modules/
@@ -24,13 +26,6 @@ wheels/
 share/python-wheels/
 *.egg-info/
 *.egg
-MANIFEST
-
-# PyInstaller
-#   Usually these files are written by a python script from a template
-#   before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
 
 # Installer logs
 pip-log.txt
@@ -51,9 +46,6 @@ cover/
 # Flask stuff:
 instance/
 
-# Sphinx documentation
-docs/_build/
-
 # PyBuilder
 target/
 
@@ -65,14 +57,12 @@ ipython_config.py
 __pypackages__/
 
 # Environments
+.venv/
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
-
-# mkdocs documentation
-/site
 
 # mypy
 dmypy.json
