@@ -1,6 +1,9 @@
 .*
 !.specify/
 
+# Model weights
+models/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -43,15 +46,8 @@ cover/
 *.mo
 *.pot
 
-# Flask stuff:
-instance/
-
 # PyBuilder
 target/
-
-# IPython
-profile_default/
-ipython_config.py
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
 __pypackages__/
@@ -61,14 +57,12 @@ __pypackages__/
 env/
 venv/
 ENV/
+vendor/
 env.bak/
 venv.bak/
 
 # mypy
 dmypy.json
-
-# Cython debug symbols
-cython_debug/
 
 # Visual Studio Code
 tempCodeRunnerFile.py

@@ -1,0 +1,13 @@
+FFmpeg is free software licensed under the GNU Lesser General Public License
+(LGPL) version 2.1 or later. When FFmpeg is built with optional GPL components,
+the resulting binary is instead covered by the GNU General Public License
+(GPL).
+
+The binaries pinned by this directory include GPL components and are identified
+as GPL-3.0-or-later by their build provider. The complete license text is
+included in this directory as `GPL-3.0.txt` and is also published at
+https://www.gnu.org/licenses/gpl-3.0.txt.
+
+Before distributing the application, include the complete GPL license text and
+the corresponding FFmpeg and dependency source code as required by that license.
+This file is dependency metadata, not legal advice.

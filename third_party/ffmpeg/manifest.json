@@ -1,0 +1,15 @@
+{
+  "name": "FFmpeg",
+  "version": "9.0.1",
+  "provider": "Evermeet",
+  "providerUrl": "https://evermeet.cx/ffmpeg/",
+  "sourceUrl": "https://ffmpeg.org/releases/ffmpeg-9.0.1.tar.xz",
+  "license": "GPL-3.0-or-later",
+  "artifact": {
+    "platform": "macos-x64",
+    "url": "https://evermeet.cx/ffmpeg/ffmpeg-9.0.1.zip",
+    "archiveSha256": "8a8c9e549983409fe6604b9aa665648b7a5def9407fe814c39c8b2ea7f64a48f",
+    "binaryPath": "ffmpeg",
+    "binarySha256": "e27de05e3a9f9c758f9766d15d1a069fddeed5f725e35d9ab28683be4740dad7"
+  }
+}
