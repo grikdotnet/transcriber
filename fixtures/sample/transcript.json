@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "time_base": {
+    "unit": "sample",
+    "sample_rate_hz": 16000,
+    "start_inclusive": true,
+    "end_exclusive": true
+  },
+  "speakers": [
+    {
+      "id": "A",
+      "corpus_participant_id": "MEE075",
+      "source_channel": 0
+    },
+    {
+      "id": "B",
+      "corpus_participant_id": "MEE076",
+      "source_channel": 1
+    },
+    {
+      "id": "C",
+      "corpus_participant_id": "MEO074",
+      "source_channel": 3
+    }
+  ],
+  "utterances": [
+    {
+      "speaker_id": "A",
+      "start_sample": 2304,
+      "end_sample": 296192,
+      "source_start_seconds": 1620.144,
+      "source_end_seconds": 1638.512,
+      "text": "End of March might be okay . Uh I'm going away for two weeks on the fourth of April . [other] And then I'm coming back just in time for the conference . So any organising , at least stuff where I need to be [disfmarker] where we need to meet physically has to be done before that .",
+      "id": "utt-0000"
+    },
+    {
+      "speaker_id": "C",
+      "start_sample": 26736,
+      "end_sample": 35120,
+      "source_start_seconds": 1621.671,
+      "source_end_seconds": 1622.195,
+      "text": "Yeah .",
+      "id": "utt-0001"
+    },
+    {
+      "speaker_id": "C",
+      "start_sample": 149168,
+      "end_sample": 156896,
+      "source_start_seconds": 1629.323,
+      "source_end_seconds": 1629.806,
+      "text": "Mm-hmm .",
+      "id": "utt-0002"
+    },
+    {
+      "speaker_id": "C",
+      "start_sample": 205712,
+      "end_sample": 219648,
+      "source_start_seconds": 1632.857,
+      "source_end_seconds": 1633.728,
+      "text": "[cough]",
+      "id": "utt-0003"
+    },
+    {
+      "speaker_id": "C",
+      "start_sample": 253696,
+      "end_sample": 261856,
+      "source_start_seconds": 1635.856,
+      "source_end_seconds": 1636.366,
+      "text": "[cough]",
+      "id": "utt-0004"
+    },
+    {
+      "speaker_id": "B",
+      "start_sample": 274480,
+      "end_sample": 283920,
+      "source_start_seconds": 1637.155,
+      "source_end_seconds": 1637.745,
+      "text": "Mm-hmm .",
+      "id": "utt-0005"
+    },
+    {
+      "speaker_id": "C",
+      "start_sample": 297472,
+      "end_sample": 332352,
+      "source_start_seconds": 1638.592,
+      "source_end_seconds": 1640.772,
+      "text": "Yeah , and I will be away",
+      "id": "utt-0006"
+    },
+    {
+      "speaker_id": "C",
+      "start_sample": 363520,
+      "end_sample": 488448,
+      "source_start_seconds": 1642.72,
+      "source_end_seconds": 1650.528,
+      "text": "[loud outtake of air] probably until Easter . So this actually means we have the week directly after Easter between my coming back and you leaving",
+      "id": "utt-0007"
+    },
+    {
+      "speaker_id": "A",
+      "start_sample": 502528,
+      "end_sample": 620032,
+      "source_start_seconds": 1651.408,
+      "source_end_seconds": 1658.752,
+      "text": "[other] I tell you one thing . Uh it's starting on the Wednesday , and the first day back is Tuesday . I think I'm coming back [disfmarker]",
+      "id": "utt-0008"
+    },
+    {
+      "speaker_id": "C",
+      "start_sample": 508832,
+      "end_sample": 527872,
+      "source_start_seconds": 1651.802,
+      "source_end_seconds": 1652.992,
+      "text": "to get the stuff done .",
+      "id": "utt-0009"
+    },
+    {
+      "speaker_id": "A",
+      "start_sample": 674816,
+      "end_sample": 804864,
+      "source_start_seconds": 1662.176,
+      "source_end_seconds": 1670.304,
+      "text": "I'm trying to get this right . Hopefully I'll be back in time that we'll be able to do something the day before . 'Cause I think I'm gonna be back .",
+      "id": "utt-0010"
+    },
+    {
+      "speaker_id": "A",
+      "start_sample": 825600,
+      "end_sample": 1186048,
+      "source_start_seconds": 1671.6,
+      "source_end_seconds": 1694.128,
+      "text": "Might even have to come in in the evening . But that's not the end of the world , but we might have to set some things up . Like maybe just get the chairs organised or whatever . We might actually have to go into the rooms and get things ready . And there's gonna be other things like getting the technology ready . So [other] not only is there a pressure to have uh",
+      "id": "utt-0011"
+    },
+    {
+      "speaker_id": "B",
+      "start_sample": 945408,
+      "end_sample": 952816,
+      "source_start_seconds": 1679.088,
+      "source_end_seconds": 1679.551,
+      "text": "Mm .",
+      "id": "utt-0012"
+    },
+    {
+      "speaker_id": "A",
+      "start_sample": 1200224,
+      "end_sample": 1524432,
+      "source_start_seconds": 1695.014,
+      "source_end_seconds": 1715.277,
+      "text": "talks that are on a similar topic together , but also if people need the same kind of computer set-up , it's good to have them together so we don't have to keep changing it . So [disfmarker] Because I th I think it was Cedric has already offered to do whatever we need him to do . But he just needs to know in advance what people need so that he can be there and and get it ready for them .",
+      "id": "utt-0013"
+    },
+    {
+      "speaker_id": "B",
+      "start_sample": 1337344,
+      "end_sample": 1344160,
+      "source_start_seconds": 1703.584,
+      "source_end_seconds": 1704.01,
+      "text": "Mm .",
+      "id": "utt-0014"
+    },
+    {
+      "speaker_id": "C",
+      "start_sample": 1485760,
+      "end_sample": 1494288,
+      "source_start_seconds": 1712.86,
+      "source_end_seconds": 1713.393,
+      "text": "Mm-hmm .",
+      "id": "utt-0015"
+    },
+    {
+      "speaker_id": "C",
+      "start_sample": 1521664,
+      "end_sample": 1528576,
+      "source_start_seconds": 1715.104,
+      "source_end_seconds": 1715.536,
+      "text": "Mm-hmm .",
+      "id": "utt-0016"
+    },
+    {
+      "speaker_id": "A",
+      "start_sample": 1545472,
+      "end_sample": 1597776,
+      "source_start_seconds": 1716.592,
+      "source_end_seconds": 1719.861,
+      "text": "[other] So I think when people [disfmarker]",
+      "id": "utt-0017"
+    },
+    {
+      "speaker_id": "B",
+      "start_sample": 1577792,
+      "end_sample": 1626112,
+      "source_start_seconds": 1718.612,
+      "source_end_seconds": 1721.632,
+      "text": "What kinds of things do you think people are actually gonna need ?",
+      "id": "utt-0018"
+    },
+    {
+      "speaker_id": "A",
+      "start_sample": 1628528,
+      "end_sample": 1852304,
+      "source_start_seconds": 1721.783,
+      "source_end_seconds": 1735.769,
+      "text": "Well , hopefully most people will d either have something like PowerPoint or they'll just have uh P_D_F_ slides or something . Hopefully , no one will have anything too specialized . S sh z",
+      "id": "utt-0019"
+    },
+    {
+      "speaker_id": "B",
+      "start_sample": 1655040,
+      "end_sample": 1661392,
+      "source_start_seconds": 1723.44,
+      "source_end_seconds": 1723.837,
+      "text": "Like [disfmarker]",
+      "id": "utt-0020"
+    },
+    {
+      "speaker_id": "B",
+      "start_sample": 1754976,
+      "end_sample": 1767088,
+      "source_start_seconds": 1729.686,
+      "source_end_seconds": 1730.443,
+      "text": "Mm-hmm .",
+      "id": "utt-0021"
+    },
+    {
+      "speaker_id": "C",
+      "start_sample": 1845248,
+      "end_sample": 1920000,
+      "source_start_seconds": 1735.328,
+      "source_end_seconds": 1756.261,
+      "text": "In my experience what you usually should have is some kind of um , what's it , over-head thingo [disfmarker] um beamer . In some cases we might [disfmarker] if it's really tough , we might be in need of a [disfmarker] of some sound system to play recordings .",
+      "id": "utt-0022"
+    }
+  ]
+}

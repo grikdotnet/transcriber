@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "time_base": {
+    "unit": "sample",
+    "sample_rate_hz": 16000,
+    "start_inclusive": true,
+    "end_exclusive": true
+  },
+  "reference_scope": "AMI manual speaker-turn regions clipped to the fixture interval",
+  "turns": [
+    {
+      "utterance_id": "utt-0000",
+      "speaker_id": "A",
+      "start_sample": 2304,
+      "end_sample": 296192
+    },
+    {
+      "utterance_id": "utt-0001",
+      "speaker_id": "C",
+      "start_sample": 26736,
+      "end_sample": 35120
+    },
+    {
+      "utterance_id": "utt-0002",
+      "speaker_id": "C",
+      "start_sample": 149168,
+      "end_sample": 156896
+    },
+    {
+      "utterance_id": "utt-0003",
+      "speaker_id": "C",
+      "start_sample": 205712,
+      "end_sample": 219648
+    },
+    {
+      "utterance_id": "utt-0004",
+      "speaker_id": "C",
+      "start_sample": 253696,
+      "end_sample": 261856
+    },
+    {
+      "utterance_id": "utt-0005",
+      "speaker_id": "B",
+      "start_sample": 274480,
+      "end_sample": 283920
+    },
+    {
+      "utterance_id": "utt-0006",
+      "speaker_id": "C",
+      "start_sample": 297472,
+      "end_sample": 332352
+    },
+    {
+      "utterance_id": "utt-0007",
+      "speaker_id": "C",
+      "start_sample": 363520,
+      "end_sample": 488448
+    },
+    {
+      "utterance_id": "utt-0008",
+      "speaker_id": "A",
+      "start_sample": 502528,
+      "end_sample": 620032
+    },
+    {
+      "utterance_id": "utt-0009",
+      "speaker_id": "C",
+      "start_sample": 508832,
+      "end_sample": 527872
+    },
+    {
+      "utterance_id": "utt-0010",
+      "speaker_id": "A",
+      "start_sample": 674816,
+      "end_sample": 804864
+    },
+    {
+      "utterance_id": "utt-0011",
+      "speaker_id": "A",
+      "start_sample": 825600,
+      "end_sample": 1186048
+    },
+    {
+      "utterance_id": "utt-0012",
+      "speaker_id": "B",
+      "start_sample": 945408,
+      "end_sample": 952816
+    },
+    {
+      "utterance_id": "utt-0013",
+      "speaker_id": "A",
+      "start_sample": 1200224,
+      "end_sample": 1524432
+    },
+    {
+      "utterance_id": "utt-0014",
+      "speaker_id": "B",
+      "start_sample": 1337344,
+      "end_sample": 1344160
+    },
+    {
+      "utterance_id": "utt-0015",
+      "speaker_id": "C",
+      "start_sample": 1485760,
+      "end_sample": 1494288
+    },
+    {
+      "utterance_id": "utt-0016",
+      "speaker_id": "C",
+      "start_sample": 1521664,
+      "end_sample": 1528576
+    },
+    {
+      "utterance_id": "utt-0017",
+      "speaker_id": "A",
+      "start_sample": 1545472,
+      "end_sample": 1597776
+    },
+    {
+      "utterance_id": "utt-0018",
+      "speaker_id": "B",
+      "start_sample": 1577792,
+      "end_sample": 1626112
+    },
+    {
+      "utterance_id": "utt-0019",
+      "speaker_id": "A",
+      "start_sample": 1628528,
+      "end_sample": 1852304
+    },
+    {
+      "utterance_id": "utt-0020",
+      "speaker_id": "B",
+      "start_sample": 1655040,
+      "end_sample": 1661392
+    },
+    {
+      "utterance_id": "utt-0021",
+      "speaker_id": "B",
+      "start_sample": 1754976,
+      "end_sample": 1767088
+    },
+    {
+      "utterance_id": "utt-0022",
+      "speaker_id": "C",
+      "start_sample": 1845248,
+      "end_sample": 1920000
+    }
+  ]
+}

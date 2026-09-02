@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "source": {
+    "creator": "AMI Consortium",
+    "meeting_id": "EN2003a",
+    "title": "Local workshop planning",
+    "audio_stream": "EN2003a.Mix-Headset.wav",
+    "audio_url": "https://groups.inf.ed.ac.uk/ami/AMICorpusMirror/amicorpus/HeadsetAudio/EN2003a.Mix-Headset.wav",
+    "annotations_url": "https://groups.inf.ed.ac.uk/ami/AMICorpusAnnotations/ami_public_manual_1.6.2.zip",
+    "corpus_url": "https://groups.inf.ed.ac.uk/ami/corpus/",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "audio_sha256": "008bc0cc470f33e81eaad8c4167c7a24852e85ac3a577fc1edf9865cc7339d64",
+    "annotations_sha256": "b56e5babb2496b8795deeeda7e71178d7fbc9963f94276cf2a3f4b56ebbc9f9d"
+  },
+  "construction": {
+    "source_interval_seconds": {
+      "start": 1620,
+      "end": 1740
+    },
+    "source_start_sample": 25920000,
+    "source_end_sample": 27840000,
+    "prepared_audio_sha256": "312ed15cc214c65b302d17575cbb07594f45da9d281d8af980b7fe52ebf70d7b",
+    "annotation_boundary_kind": "AMI manual transcriber segment boundaries",
+    "word_timing_kind": "AMI forced-aligned word timestamps"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "audio": {
+    "path": "prepared.wav",
+    "sample_rate_hz": 16000,
+    "channels": 1,
+    "sample_format": "pcm_s16le",
+    "total_samples": 1920000
+  },
+  "segments": [
+    {
+      "index": 0,
+      "start_sample": 0,
+      "end_sample": 340352,
+      "duration_samples": 340352,
+      "path": "segments/segment-0000.wav"
+    },
+    {
+      "index": 1,
+      "start_sample": 355520,
+      "end_sample": 628032,
+      "duration_samples": 272512,
+      "path": "segments/segment-0001.wav"
+    },
+    {
+      "index": 2,
+      "start_sample": 666816,
+      "end_sample": 812864,
+      "duration_samples": 146048,
+      "path": "segments/segment-0002.wav"
+    },
+    {
+      "index": 3,
+      "start_sample": 817600,
+      "end_sample": 1193136,
+      "duration_samples": 375536,
+      "path": "segments/segment-0003.wav"
+    },
+    {
+      "index": 4,
+      "start_sample": 1193136,
+      "end_sample": 1627320,
+      "duration_samples": 434184,
+      "path": "segments/segment-0004.wav"
+    },
+    {
+      "index": 5,
+      "start_sample": 1627320,
+      "end_sample": 1920000,
+      "duration_samples": 292680,
+      "path": "segments/segment-0005.wav"
+    }
+  ]
+}
