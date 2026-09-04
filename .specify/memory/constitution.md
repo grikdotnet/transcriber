@@ -1,11 +1,10 @@
 <!--
 Sync Impact Report
-- Version change: 1.1.0 -> 1.2.0
+- Version change: 1.2.0 -> 1.3.0
 - Modified principles:
-  - V. Complete and Verifiable Plans -> V. Complete and Verifiable Plans
-    (three-cycle limit and mandatory manual-review escalation added)
-- Modified sections:
-  - Planning rules (agent lifecycle bounded by manual-review gate)
+  - I. Test-First Development -> I. Test-First Development
+    (mandatory third-party testing boundary added)
+- Modified sections: None
 - Added sections: None
 - Removed sections: None
 - Follow-up TODOs: None
@@ -21,6 +20,13 @@ refactor only while all tests remain green. Bug fixes MUST start with a reproduc
 Refactors MUST start and end with the same relevant tests passing. Changed contracts, boundaries,
 integrations, and failure paths MUST have tests at the appropriate level. Tests MUST prove the
 requested behavior, not merely execute changed lines.
+
+Tests MUST verify only behavior owned by this project. Tests MUST NOT attempt to verify the
+correctness, accuracy, quality, performance, or internal behavior of third-party libraries,
+runtimes, executables, services, or models, including FFmpeg, FireRedVAD, and ASR models. Tests
+covering third-party integrations MUST verify project-owned integration behavior, including input construction, dependency invocation, output parsing, contract mapping, handling of errors, and malformed responses. Such tests MUST use controlled fixtures, fakes, or mocks where
+practical and MUST NOT assert the semantic correctness of results produced by the third-party
+dependency.
 
 ### II. Enforced Architectural Boundaries
 Domain, application, infrastructure, and UI responsibilities MUST remain separate. Every new or changed class, standalone function, or package covered by `architecture/layers.md` MUST be categorized, and pass the Planning Architecture Gate.
@@ -103,4 +109,4 @@ reject work lacking test-first evidence, automated verification, task traceabili
 architecture classification, or deterministic verification. Complexity and claimed deviations
 MUST be resolved through a constitution amendment or design change; informal exceptions are forbidden.
 
-**Version**: 1.2.0 | **Ratified**: 2026-07-30 | **Last Amended**: 2026-08-02
+**Version**: 1.3.0 | **Ratified**: 2026-07-30 | **Last Amended**: 2026-09-04
