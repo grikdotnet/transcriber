@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://transcriber.local/contracts/segment-manifest-v1.schema.json",
+  "title": "Segment Manifest v1",
+  "$comment": "Cross-field, ordering, path/index, and audio-bound invariants are mandatory and are defined in manifest.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "audio", "segments"],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "audio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sample_rate_hz",
+        "channels",
+        "sample_format",
+        "total_samples"
+      ],
+      "properties": {
+        "path": {
+          "const": "prepared.wav"
+        },
+        "sample_rate_hz": {
+          "const": 16000
+        },
+        "channels": {
+          "const": 1
+        },
+        "sample_format": {
+          "const": "pcm_s16le"
+        },
+        "total_samples": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "index",
+          "start_sample",
+          "end_sample",
+          "duration_samples",
+          "path"
+        ],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "start_sample": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "end_sample": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "duration_samples": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^segments/segment-[0-9]{4,}\\.wav$"
+          }
+        }
+      }
+    }
+  }
+}

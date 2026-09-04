@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://transcriber.local/contracts/firered-probabilities-v1.schema.json",
+  "title": "FireRedVAD Probability Document v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "audio", "frames"],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "audio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sample_rate_hz",
+        "channels",
+        "sample_format",
+        "total_samples"
+      ],
+      "properties": {
+        "sample_rate_hz": {
+          "const": 16000
+        },
+        "channels": {
+          "const": 1
+        },
+        "sample_format": {
+          "const": "pcm_s16le"
+        },
+        "total_samples": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "frames": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frame_length_samples",
+        "frame_shift_samples",
+        "frame_count",
+        "probabilities"
+      ],
+      "properties": {
+        "frame_length_samples": {
+          "const": 400
+        },
+        "frame_shift_samples": {
+          "const": 160
+        },
+        "frame_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "probabilities": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        }
+      }
+    }
+  }
+}
