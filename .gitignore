@@ -10,12 +10,18 @@ __pycache__/
 *$py.class
 
 # C extensions
+*.o
+*.a
 *.so
 *.dll
+*.exe
 
 # Distribution / packaging
 node_modules/
 build/
+bin/
+obj/
+out/
 develop-eggs/
 dist/
 downloads/
@@ -33,6 +39,9 @@ share/python-wheels/
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+*.log
+*.tmp
+*.swp
 
 # Unit test / coverage reports
 htmlcov/

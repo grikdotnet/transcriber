@@ -133,26 +133,31 @@ Immutable settings for one preparation task.
 | `frame_index` | non-negative integer | Contiguous and equal to array position. |
 | `probability` | float | Finite and in `[0.0, 1.0]`. |
 
-### FrameInterval
+### SampleInterval
 
-Intermediate FireRed decision run.
+Intermediate speech interval after the Infrastructure adapter mechanically converts the
+upstream postprocessor's timestamps to exact 16 kHz integer sample boundaries.
 
 | Field | Type | Rules |
 |---|---|---|
-| `start_frame` | non-negative integer | Inclusive. |
-| `end_frame` | positive integer | Exclusive and `> start_frame`. |
+| `start_sample` | non-negative integer | Inclusive. |
+| `end_sample` | positive integer | Exclusive and `> start_sample`. |
 
-Intervals returned to the middleware are chronological and non-overlapping. Their internal upstream derivation is outside the first-party Domain model.
+The Infrastructure conversion is a representation change only: it does not clamp, round to a
+10-millisecond frame boundary, split, merge, or otherwise reinterpret the upstream result.
+Domain accepts these intervals as authoritative and validates only positive duration, chronology,
+non-overlap, and canonical-file bounds. Their internal upstream derivation remains outside the
+first-party Domain model.
 
 ### FinalSpeechSegment
 
-Sample-aligned output derived from a `FrameInterval`.
+Manifest-ready output derived from a validated `SampleInterval`.
 
 | Field | Type | Rules |
 |---|---|---|
 | `index` | non-negative integer | Contiguous in chronological order. |
-| `start_sample` | non-negative integer | Inclusive; derived from `start_frame * 160`; the interval is rejected if the result is outside audio bounds. |
-| `end_sample` | positive integer | Exclusive; derived through FireRed timestamp semantics; the interval is rejected if the result exceeds `total_samples`. |
+| `start_sample` | non-negative integer | Inclusive; copied unchanged from `SampleInterval`; rejected if outside audio bounds. |
+| `end_sample` | positive integer | Exclusive; copied unchanged from `SampleInterval`; rejected if it exceeds `total_samples`. |
 | `duration_samples` | positive integer | `end_sample - start_sample`. |
 
 The configured split target is not a maximum-duration invariant. Segment duration may exceed it if that is the pinned FireRed result.
@@ -177,7 +182,7 @@ Owns absolute `vendor/firered-vad-ncnn` resolution, model-asset argv constructio
 
 ### FireRedPostprocessor
 
-Thinly adapts primitive probability/configuration values to the pinned unchanged upstream FireRedVAD Python postprocessor and returns primitive frame-range values. It does not import Domain entities and does not reimplement, correct, or add filters around upstream state-machine behavior.
+Thinly adapts primitive probability/configuration values to the pinned unchanged upstream FireRedVAD Python postprocessor, supplies canonical duration as `wav_dur`, and returns exact adapted 16 kHz sample-boundary pairs for construction as `SampleInterval` values. It does not import Domain entities and does not reimplement, correct, clamp, or add filters around upstream state-machine behavior.
 
 ### WorkDirectory
 
@@ -267,9 +272,9 @@ PrepareCommand
        ├─ FireRedNcnnProcess ──> JSON bytes
        ├─ probability codec ──> FireRedProbabilityDocument
        │                              └─ accepted timeline metadata ──> CanonicalAudio
-       ├─ FireRedPostprocessor ──> primitive frame ranges
-       │                              └─ Service maps/validates ──> FrameInterval[]
-       ├─ Domain conversion ──> FinalSpeechSegment[]
+       ├─ FireRedPostprocessor ──> primitive upstream timestamps
+       │                              └─ Infrastructure maps exactly ──> SampleInterval[]
+       ├─ Domain validates/copies ──> FinalSpeechSegment[]
        ├─ manifest codec ──> SegmentManifest (in memory)
        ├─ Service unpacks sample/path primitives
        │     └─ WaveFileReader / WaveSegmentWriter ──> segment WAV files + WaveMetadata

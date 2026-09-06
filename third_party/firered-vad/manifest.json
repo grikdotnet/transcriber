@@ -1,0 +1,16 @@
+{
+  "name": "FireRedVAD",
+  "origin": "https://github.com/FireRedTeam/FireRedVAD",
+  "revision": "c30ec49e8cc69642b0ee65362eba11b9d11c6e54",
+  "license": "Apache-2.0",
+  "runtime_ncnn_example": {
+    "path": "runtime-ncnn-example/test_vad_non_stream.cpp",
+    "sha256": "aa76f095b2fbeb758f939d243f3002b939e439d003ba7524d88694c781be6144"
+  },
+  "runtime_common_frontend_sha256": {
+    "fbank.h": "0d5871e71f26495b5d88bfbc7d898935d0f989dd1d7f555175aa58f05996f0c2",
+    "fft.cc": "a8fa5a1a5c54a7824a20178b15df762fdbccd05d853588395fe210394d2733e5",
+    "fft.h": "ce56634fde729dfbe6af010f56c21cc6bc04d49561b407edc0427d21bfe92978",
+    "wav.h": "9d66780679a37ab2fa8a27693cbb6f6d24563e379a61868d4cf0235ee20251b0"
+  }
+}

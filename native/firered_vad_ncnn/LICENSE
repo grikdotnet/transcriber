@@ -1,0 +1,3 @@
+This first-party runner is distributed under the repository's license. It is
+a separate executable that statically links NCNN and compiles the pinned
+FireRedVAD frontend. See NOTICE.md and the license files under third_party/.

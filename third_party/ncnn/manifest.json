@@ -1,0 +1,13 @@
+{
+  "name": "ncnn",
+  "origin": "https://github.com/Tencent/ncnn",
+  "tag": "20260113",
+  "revision": "e956fbf9bd97fe945df35d736747dc816f8b5f42",
+  "license": "BSD-3-Clause with bundled third-party component notices",
+  "license_notice": "third_party/ncnn/LICENSE.txt",
+  "linked_artifact": "libncnn.a",
+  "linkage": "exact static CPU-only NCNN_ROOT/lib/libncnn.a; no shared-library or name-based fallback",
+  "version_verification": "NCNN_ROOT/lib/cmake/ncnn/ncnnConfigVersion.cmake must report PACKAGE_VERSION 20260113 at configure time",
+  "distribution_notice": "Binary distributions of firered-vad-ncnn must accompany third_party/ncnn/LICENSE.txt, including its zlib, BSD-2-Clause, and BSD-3-Clause component notices.",
+  "repository_license_effect": "This provenance record does not determine or change the containing repository's license."
+}

@@ -54,7 +54,7 @@ Set `NCNN_ROOT` to the pinned local NCNN installation and run the project build 
 NCNN_ROOT=/absolute/path/to/ncnn-20260113/install \
   scripts/build-firered-vad-ncnn-macos.sh
 
-./vendor/firered-vad-ncnn --help
+file vendor/firered-vad-ncnn
 ```
 
 The build must create `vendor/firered-vad-ncnn` for the host architecture without downloading files. The native wire contract is [contracts/firered-runner.md](contracts/firered-runner.md).
@@ -100,7 +100,7 @@ This command must fail, not skip, if FFmpeg, the native runner, model assets, or
 
 - `fixtures/sample/prepared.wav` is processed once through the complete CLI workflow.
 - The runner's public probability document is schema-valid and its reported frame count equals the probability-array length.
-- Returned valid speech intervals remain ordered and are converted without changing their boundaries beyond the required frame-to-sample mapping.
+- The Infrastructure adapter represents returned timestamps as exact 16 kHz sample boundaries; Domain accepts valid ordered `SampleInterval` values without clamping or changing those boundaries.
 - Every generated WAV's sample count exactly matches its generated manifest interval.
 - No outbound network request occurs.
 - Exactly one compact `REFERENCE_DIAGNOSTIC={...}` line is printed.

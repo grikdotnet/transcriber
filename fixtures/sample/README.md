@@ -1,25 +1,23 @@
 # AMI EN2003a reusable audio fixture
 
-This fixture supports media segmentation, transcription, and three-speaker diarization tests. It is the two-minute interval `00:27:00.000–00:29:00.000` from the AMI Meeting Corpus recording `EN2003a.Mix-Headset.wav`.
+This fixture is the two-minute interval `00:27:00.000–00:29:00.000` from the AMI Meeting Corpus recording `EN2003a.Mix-Headset.wav`. The current middleware uses `prepared.wav` as its integration input and `manifest.json` only for a non-gating diagnostic comparison. Transcript and diarization records are retained as provenance and reference data for possible later phases; the current middleware does not consume them.
 
 The mixed-headset channel keeps all three speakers clearly represented while retaining natural conversation, short pauses, overlapping speech, coughs, breath noise, and other meeting artifacts. It replaces the earlier distant-array excerpt whose manual annotations included a turn that was acoustically inaudible on the selected channel.
 
-## Artifact contracts
+## Artifact inventory
 
 - `prepared.wav`: mono 16 kHz signed 16-bit PCM, exactly 1,920,000 samples.
-- `injected-vad-intervals.json`: nine human-reference activity intervals obtained by unioning overlapping AMI manual speaker turns.
-- `manifest.json`: six expected final segments for the default 30-second maximum, 2-second merge threshold, and up-to-0.5-second padding.
-- `segments/*.wav`: sample-exact slices referenced by the manifest.
-- `transcript.json`: 23 speaker-attributed AMI turns with fixture sample ranges, original meeting times, and orthographic text.
-- `diarization.json`: speaker-specific reference turns keyed to transcript utterance IDs. Turns may overlap.
+- `manifest.json`: a human reference containing six historical segments; middleware checks may use it only for a non-gating diagnostic comparison, never as an acceptance oracle for FireRedVAD output.
+- `segments/*.wav`: sample-exact historical reference slices for diagnosis; generated output is not required to match them.
+- `transcript.json`: retained provenance/reference data containing 23 speaker-attributed AMI turns with fixture sample ranges, original meeting times, and orthographic text; it is not consumed in this delivery.
+- `diarization.json`: retained provenance/reference speaker turns keyed to transcript utterance IDs; it is not consumed in this delivery, and turns may overlap.
 - `source.json`: source URLs, checksums, CC BY 4.0 provenance, and exact crop bounds.
-- `build_fixture.py`: offline rebuild script accepting a downloaded AMI mixed-headset WAV and manual-annotations ZIP.
 
-AMI's `transcriber_start` and `transcriber_end` values form the human segmentation reference. Word timings are forced-aligned and should use an appropriate scoring collar. Silero integration tests should keep their model, runtime, and inference parameters pinned and use separate model-output expectations.
+AMI's `transcriber_start` and `transcriber_end` values form a human diagnostic reference. Word timings are forced-aligned and should use an appropriate scoring collar. Differences between this reference and FireRedVAD output do not determine middleware acceptance.
 
-## Entities and relationships
+## Reference-data relationships
 
-Each transcript utterance belongs to speaker `A`, `B`, or `C` and maps one-to-one to a diarization turn. Simultaneous and overlapping turns are unioned into raw activity intervals. The final planner merges nearby intervals when permitted, enforces the configured maximum, and adds available no-speech padding. A segment may therefore contain several utterances and speakers.
+Each transcript utterance belongs to speaker `A`, `B`, or `C` and maps one-to-one to a diarization turn. Simultaneous and overlapping human-reference turns were unioned into the activity intervals below. The historical reference segments were produced separately and may contain several utterances and speakers. They do not specify how FireRedVAD must segment the fixture.
 
 | Fixture speaker | AMI participant | Source channel |
 |---|---|---:|
@@ -43,9 +41,11 @@ Times are relative to `prepared.wav`; sample ends are exclusive.
 | 1545472–1626112 | 96.592–101.632 |
 | 1628528–1920000 | 101.783–120.000 |
 
-## Expected final segmentation
+## Historical diagnostic segmentation
 
-| Segment | Samples | Seconds | Relevant behavior |
+These six records describe `manifest.json` and `segments/*.wav`. They are useful when a person investigates differences, but their count and boundaries are not expected FireRedVAD results and are not acceptance criteria.
+
+| Segment | Samples | Seconds | Historical construction note |
 |---:|---:|---:|---|
 | 0 | 0–340352 | 0.000–21.272 | Two activity intervals merge; left padding is file-clamped |
 | 1 | 355520–628032 | 22.220–39.252 | Two intervals merge across a 0.880-second pause |
@@ -54,19 +54,7 @@ Times are relative to `prepared.wav`; sample ends are exclusive.
 | 4 | 1193136–1627320 | 74.571–101.7075 | Three intervals merge; boundary padding shares adjacent short gaps |
 | 5 | 1627320–1920000 | 101.7075–120.000 | Short boundary gap is shared; right padding is file-clamped |
 
-The synthetic 55-second continuous-speech case remains the appropriate unit fixture for testing mandatory splits inside speech. This real fixture instead exercises overlapping speakers, short-pause merging, maximum-span rejection, shared-gap padding, and file-boundary clamping.
-
-## Rebuilding
-
-Download the AMI source artifacts, then run:
-
-```bash
-python3 fixtures/media-segmentation-golden/build_fixture.py \
-  EN2003a.Mix-Headset.wav \
-  ami_public_manual_1.6.2.zip
-```
-
-The script validates the audio format, extracts source samples 25,920,000–27,840,000, reads all three speaker annotation streams, unions overlaps, derives final intervals, and rewrites every generated fixture artifact.
+Current middleware passes `--max-segment-duration-seconds` to FireRedVAD as an advisory split target. FireRedVAD may return segments longer than that target. The middleware accepts valid, ordered intervals unchanged; it does not compare their count or boundaries with this historical table to decide success.
 
 ## Provenance and use
 
