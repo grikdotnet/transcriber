@@ -1,10 +1,9 @@
 <!--
 Sync Impact Report
-- Version change: 1.2.0 -> 1.3.0
-- Modified principles:
-  - I. Test-First Development -> I. Test-First Development
-    (mandatory third-party testing boundary added)
-- Modified sections: None
+- Version change: 2.0.0 -> 2.1.0
+- Modified principles: None
+- Modified sections:
+  - Planning rules (mandatory model and reasoning-effort assignments by sub-agent role)
 - Added sections: None
 - Removed sections: None
 - Follow-up TODOs: None
@@ -14,12 +13,11 @@ Sync Impact Report
 ## Core Principles
 
 ### I. Test-First Development
-Every behavioral code change MUST follow red-green-refactor: write a test for the intended
-behavior, confirm it fails for the expected reason, add the minimum code needed to pass, then
-refactor only while all tests remain green. Bug fixes MUST start with a reproducing test.
-Refactors MUST start and end with the same relevant tests passing. Changed contracts, boundaries,
-integrations, and failure paths MUST have tests at the appropriate level. Tests MUST prove the
-requested behavior, not merely execute changed lines.
+Every behavioral code change MUST be test-first: write a test for the intended behavior before implementing the behavior, add the minimum code needed to pass, then refactor only while all tests remain green. Running the new test before implementation to confirm that the test fails for the expected reason MAY be skipped.
+Bug fixes MUST start with a reproducing test; confirming the test's pre-fix failure is required.
+Refactors MUST start and end with the same relevant tests passing.
+Changed contracts, boundaries, integrations, and failure paths MUST
+have tests at the appropriate level. Tests MUST prove the requested behavior, not merely execute changed lines.
 
 Tests MUST verify only behavior owned by this project. Tests MUST NOT attempt to verify the
 correctness, accuracy, quality, performance, or internal behavior of third-party libraries,
@@ -66,16 +64,29 @@ define three distinct roles: Worker, Validator, and Supervisor. A plan MAY assig
 to each role, but the three roles for a given work item MUST be held by different agents. The plan
 MUST identify which Validator and Supervisor receive each Worker's result.
 
+Sub-agents MUST use the following model and reasoning-effort assignments:
+
+- Worker: `gpt-5.6-terra` with `high` reasoning effort.
+- Validator: `gpt-5.6-sol` with `high` reasoning effort.
+- Supervisor: `gpt-5.6-sol` with `medium` reasoning effort.
+
+Each separate task MUST receive a newly created Worker and a newly created Validator. Both agents
+MUST start the task with clean context windows containing only the task-specific context and
+project instructions needed to perform their roles. A Worker or Validator assigned to one task
+MUST NOT be reused for a separate task. The same Supervisor MAY coordinate multiple tasks.
+
 The Worker implements the task, records verification evidence, and submits both to the Validator.
 The Validator independently checks the result against the task's acceptance criteria, approved
 plan, tests, architecture rules, and scope, then reports findings and evidence to the Supervisor.
 The Supervisor reviews the Validator's report and either accepts the work or returns actionable
 feedback to the Worker.
 
-When work is returned, the Worker MUST revise it and resubmit it to the Validator. The Validator
-MUST repeat validation and send an updated report to the Supervisor. A cycle starts when the
-Worker submits a result and ends when the Supervisor accepts or returns it; the initial submission
-is cycle 1. A work item MUST NOT exceed three Worker → Validator → Supervisor cycles.
+The Worker and Validator assignments MUST remain stable for the full lifecycle of a task. When the
+Supervisor returns work, the same Worker that implemented the task MUST revise it and resubmit it
+to the same Validator that performed the preceding review. That Validator MUST repeat validation
+and send an updated report to the Supervisor. A cycle starts when the Worker submits a result and
+ends when the Supervisor accepts or returns it; the initial submission is cycle 1. A work item MUST
+NOT exceed three Worker → Validator → Supervisor cycles.
 
 If the Supervisor does not accept the work by the end of cycle 3, all agent work on that item MUST
 halt. The Supervisor MUST prepare a manual-review summary containing the work item's scope, each
@@ -105,8 +116,10 @@ Versions follow semantic versioning: MAJOR for incompatible principle removals o
 new principles or materially expanded requirements, and PATCH for non-semantic clarifications.
 
 Every implementation plan and code review MUST check constitution compliance. Reviewers MUST
-reject work lacking test-first evidence, automated verification, task traceability, required
-architecture classification, or deterministic verification. Complexity and claimed deviations
-MUST be resolved through a constitution amendment or design change; informal exceptions are forbidden.
+reject work lacking evidence that tests were created before implementation, automated verification,
+task traceability, required architecture classification, or deterministic verification. Evidence
+of executing a new test before implementation is NOT required. Complexity and claimed deviations
+MUST be resolved through a constitution amendment or design change; informal exceptions are
+forbidden.
 
-**Version**: 1.3.0 | **Ratified**: 2026-07-30 | **Last Amended**: 2026-09-04
+**Version**: 2.1.0 | **Ratified**: 2026-07-30 | **Last Amended**: 2026-09-07
