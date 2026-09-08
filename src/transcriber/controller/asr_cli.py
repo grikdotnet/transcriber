@@ -12,6 +12,7 @@ from types import FrameType
 
 from transcriber.composition.application import RequiredAsrLanguageError, build_application
 from transcriber.protocol.asr_cli import AsrCommand, AsrFailure, AsrProgress, AsrSuccess
+from transcriber.protocol.qwen_asr import QwenUnsupportedLanguageError
 
 type PreviousSignalHandler = Callable[[int, FrameType | None], object] | int | None
 
@@ -181,6 +182,15 @@ def main(arguments: Sequence[str] | None = None) -> int:
         result = application.recognize(command)
     except RequiredAsrLanguageError:
         return 2
+    except QwenUnsupportedLanguageError as error:
+        _render_failure(
+            AsrFailure(
+                stage="execution-provider",
+                message=str(error),
+                model_id=command.model_id,
+            )
+        )
+        return 1
     except ValueError:
         return 1
     finally:

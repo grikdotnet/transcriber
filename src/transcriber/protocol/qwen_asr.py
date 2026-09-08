@@ -3,14 +3,54 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
+from types import MappingProxyType
 from typing import Final, Never
 
 _ASR_TEXT_MARKER: Final = "<asr_text>"
+_QWEN_LANGUAGE_BY_PRIMARY_SUBTAG: Final[Mapping[str, str]] = MappingProxyType(
+    {
+        "en": "English",
+        "pt": "Portuguese",
+        "zh": "Chinese",
+        "yue": "Cantonese",
+        "ar": "Arabic",
+        "de": "German",
+        "fr": "French",
+        "es": "Spanish",
+        "id": "Indonesian",
+        "it": "Italian",
+        "ko": "Korean",
+        "ru": "Russian",
+        "th": "Thai",
+        "vi": "Vietnamese",
+        "ja": "Japanese",
+        "tr": "Turkish",
+        "hi": "Hindi",
+        "ms": "Malay",
+        "nl": "Dutch",
+        "sv": "Swedish",
+        "da": "Danish",
+        "fi": "Finnish",
+        "pl": "Polish",
+        "cs": "Czech",
+        "fil": "Filipino",
+        "fa": "Persian",
+        "el": "Greek",
+        "ro": "Romanian",
+        "hu": "Hungarian",
+        "mk": "Macedonian",
+    }
+)
 
 
 class QwenProviderResponseError(ValueError):
     """Raised when a Qwen chat-completion response has no usable text result."""
+
+
+class QwenUnsupportedLanguageError(ValueError):
+    """Raised when a valid language tag has no Qwen provider-language mapping."""
 
 
 def encode_qwen_request(*, audio_path: Path, recognition_context: str, language: str) -> bytes:
@@ -19,8 +59,14 @@ def encode_qwen_request(*, audio_path: Path, recognition_context: str, language:
         raise ValueError("audio path must be an absolute Path")
     if not isinstance(recognition_context, str):
         raise TypeError("recognition context must be text")
-    if language not in {"auto", "en-GB"}:
-        raise ValueError("Qwen request supports automatic language or en-GB")
+    provider_language: str | None = None
+    if language != "auto":
+        primary_subtag = language.split("-", maxsplit=1)[0].lower()
+        provider_language = _QWEN_LANGUAGE_BY_PRIMARY_SUBTAG.get(primary_subtag)
+        if provider_language is None:
+            raise QwenUnsupportedLanguageError(
+                f"Qwen ASR does not support language tag: {language}"
+            )
 
     messages: list[dict[str, object]] = [
         {"role": "system", "content": recognition_context},
@@ -34,8 +80,10 @@ def encode_qwen_request(*, audio_path: Path, recognition_context: str, language:
             ],
         },
     ]
-    if language == "en-GB":
-        messages.append({"role": "assistant", "content": "language English<asr_text>"})
+    if language != "auto":
+        messages.append(
+            {"role": "assistant", "content": f"language {provider_language}<asr_text>"}
+        )
 
     document = {
         "messages": messages,

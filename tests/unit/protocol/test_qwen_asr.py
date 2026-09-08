@@ -7,6 +7,7 @@ import pytest
 
 from transcriber.protocol.qwen_asr import (
     QwenProviderResponseError,
+    QwenUnsupportedLanguageError,
     decode_qwen_response,
     encode_qwen_request,
     extract_qwen_error_message,
@@ -26,6 +27,150 @@ def test_automatic_language_request_has_exact_deterministic_provider_relative_au
         b'"input_audio":{"url":"file://segment-0007.wav"}}]}],'
         b'"stream":false,"temperature":0,"cache_prompt":false}'
     )
+
+
+def test_unsupported_primary_language_tag_is_rejected_before_qwen_request_encoding() -> None:
+    with pytest.raises(QwenUnsupportedLanguageError) as raised:
+        encode_qwen_request(
+            audio_path=Path("/task/segments/segment-0007.wav"),
+            recognition_context="",
+            language="cy",
+        )
+
+    assert str(raised.value) == "Qwen ASR does not support language tag: cy"
+
+
+def test_explicit_english_primary_tag_encodes_canonical_qwen_label() -> None:
+    payload = encode_qwen_request(
+        audio_path=Path("/task/segments/segment-0007.wav"),
+        recognition_context="Earlier recognized words.",
+        language="en",
+    )
+
+    assert payload == (
+        b'{"messages":[{"role":"system","content":"Earlier recognized words."},'
+        b'{"role":"user","content":[{"type":"input_audio",'
+        b'"input_audio":{"url":"file://segment-0007.wav"}}]},'
+        b'{"role":"assistant","content":"language English<asr_text>"}],'
+        b'"stream":false,"temperature":0,"cache_prompt":false}'
+    )
+
+
+@pytest.mark.parametrize(
+    ("language", "expected_payload"),
+    (
+        (
+            "en-GB",
+            b'{"messages":[{"role":"system","content":""},'
+            b'{"role":"user","content":[{"type":"input_audio",'
+            b'"input_audio":{"url":"file://segment-0007.wav"}}]},'
+            b'{"role":"assistant","content":"language English<asr_text>"}],'
+            b'"stream":false,"temperature":0,"cache_prompt":false}',
+        ),
+        (
+            "en-US",
+            b'{"messages":[{"role":"system","content":""},'
+            b'{"role":"user","content":[{"type":"input_audio",'
+            b'"input_audio":{"url":"file://segment-0007.wav"}}]},'
+            b'{"role":"assistant","content":"language English<asr_text>"}],'
+            b'"stream":false,"temperature":0,"cache_prompt":false}',
+        ),
+    ),
+)
+def test_explicit_english_regional_tags_encode_canonical_qwen_label(
+    language: str, expected_payload: bytes
+) -> None:
+    payload = encode_qwen_request(
+        audio_path=Path("/task/segments/segment-0007.wav"),
+        recognition_context="",
+        language=language,
+    )
+
+    assert payload == expected_payload
+
+
+def test_explicit_language_primary_subtag_is_case_insensitive() -> None:
+    payload = encode_qwen_request(
+        audio_path=Path("/task/segments/segment-0007.wav"),
+        recognition_context="",
+        language="EN-us",
+    )
+
+    assert payload == (
+        b'{"messages":[{"role":"system","content":""},'
+        b'{"role":"user","content":[{"type":"input_audio",'
+        b'"input_audio":{"url":"file://segment-0007.wav"}}]},'
+        b'{"role":"assistant","content":"language English<asr_text>"}],'
+        b'"stream":false,"temperature":0,"cache_prompt":false}'
+    )
+
+
+@pytest.mark.parametrize(
+    ("language", "provider_language"),
+    (
+        ("zh", "Chinese"),
+        ("yue", "Cantonese"),
+        ("ar", "Arabic"),
+        ("de", "German"),
+        ("fr", "French"),
+        ("es", "Spanish"),
+        ("pt", "Portuguese"),
+        ("id", "Indonesian"),
+        ("it", "Italian"),
+        ("ko", "Korean"),
+        ("ru", "Russian"),
+        ("th", "Thai"),
+        ("vi", "Vietnamese"),
+        ("ja", "Japanese"),
+        ("tr", "Turkish"),
+        ("hi", "Hindi"),
+        ("ms", "Malay"),
+        ("nl", "Dutch"),
+        ("sv", "Swedish"),
+        ("da", "Danish"),
+        ("fi", "Finnish"),
+        ("pl", "Polish"),
+        ("cs", "Czech"),
+        ("fil", "Filipino"),
+        ("fa", "Persian"),
+        ("el", "Greek"),
+        ("ro", "Romanian"),
+        ("hu", "Hungarian"),
+        ("mk", "Macedonian"),
+    ),
+)
+def test_supported_primary_language_tag_encodes_canonical_qwen_label(
+    language: str, provider_language: str
+) -> None:
+    payload = encode_qwen_request(
+        audio_path=Path("/task/segments/segment-0007.wav"),
+        recognition_context="",
+        language=language,
+    )
+
+    assert json.loads(payload)["messages"][-1] == {
+        "role": "assistant",
+        "content": f"language {provider_language}<asr_text>",
+    }
+
+
+@pytest.mark.parametrize(
+    ("language", "provider_language"),
+    (("pt-BR", "Portuguese"), ("zh-Hans-CN", "Chinese")),
+)
+def test_supported_language_regional_and_variant_subtags_use_primary_mapping(
+    language: str, provider_language: str
+) -> None:
+    payload = encode_qwen_request(
+        audio_path=Path("/task/segments/segment-0007.wav"),
+        recognition_context="",
+        language=language,
+    )
+
+    assert json.loads(payload)["messages"][-1] == {
+        "role": "assistant",
+        "content": f"language {provider_language}<asr_text>",
+    }
 
 
 def test_explicit_english_request_maps_context_and_assistant_prefill_to_exact_bytes() -> None:

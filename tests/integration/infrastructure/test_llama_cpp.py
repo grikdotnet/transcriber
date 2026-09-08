@@ -17,6 +17,7 @@ from transcriber.infrastructure.execution_provider import (
 )
 from transcriber.infrastructure.llama_cpp import HttpLoopbackTransport, LlamaCppExecutionProvider
 from transcriber.infrastructure.process import SubprocessManagedProcessStarter
+from transcriber.protocol.qwen_asr import encode_qwen_request
 
 EXECUTABLE = Path("/repository/vendor/llama-server")
 MODEL = Path("/repository/models/qwen3-asr-1.7b/Qwen3-ASR-1.7B-Q8_0.gguf")
@@ -185,6 +186,60 @@ def test_provider_request_error_retains_separate_diagnostic() -> None:
 
     assert raised.value.message == "recognition request failed"
     assert raised.value.diagnostic == "provider HTTP failure"
+
+
+def test_explicit_portuguese_regional_tag_reaches_provider_as_canonical_language() -> None:
+    clock = ControlledClock()
+    transport = LoopbackTransportDouble()
+    provider = LlamaCppExecutionProvider(
+        executable=EXECUTABLE,
+        model_path=MODEL,
+        audio_projector_path=PROJECTOR,
+        process_starter=ManagedProcessStarterDouble(ManagedProcessDouble()),
+        transport=transport,
+        encode_request=encode_qwen_request,
+        decode_response=lambda _payload: "recognized text",
+        endpoint_port=lambda: 43127,
+        monotonic_clock=clock,
+        sleeper=clock.sleep,
+    )
+    session = provider.create(segment_root=SEGMENT_ROOT)
+    request = RecognitionRequest(
+        0, SEGMENT_ROOT / "segment-0000.wav", "", "pt-BR"
+    )
+
+    session.start()
+    result = session.recognize(request)
+
+    assert b'"content":"language Portuguese<asr_text>"' in transport.recognition_calls[0][2]
+    assert result.text == "recognized text"
+
+
+def test_unsupported_qwen_language_sends_no_recognition_http_request() -> None:
+    clock = ControlledClock()
+    transport = LoopbackTransportDouble()
+    provider = LlamaCppExecutionProvider(
+        executable=EXECUTABLE,
+        model_path=MODEL,
+        audio_projector_path=PROJECTOR,
+        process_starter=ManagedProcessStarterDouble(ManagedProcessDouble()),
+        transport=transport,
+        encode_request=encode_qwen_request,
+        decode_response=lambda _payload: "recognized text",
+        endpoint_port=lambda: 43127,
+        monotonic_clock=clock,
+        sleeper=clock.sleep,
+    )
+    session = provider.create(segment_root=SEGMENT_ROOT)
+    session.start()
+
+    with pytest.raises(ExecutionProviderFailure) as raised:
+        session.recognize(
+            RecognitionRequest(0, SEGMENT_ROOT / "segment-0000.wav", "", "cy")
+        )
+
+    assert raised.value.message == "Qwen ASR does not support language tag: cy"
+    assert transport.recognition_calls == []
 
 
 def test_http_error_uses_the_injected_qwen_error_message_extractor(

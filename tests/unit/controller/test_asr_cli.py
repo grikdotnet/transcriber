@@ -10,6 +10,7 @@ from transcriber.composition.application import Application
 from transcriber.controller import asr_cli
 from transcriber.protocol.asr_cli import AsrCommand, AsrFailure, AsrProgress, AsrSuccess
 from transcriber.protocol.asr_model_manifest import AsrModelCapabilities
+from transcriber.protocol.qwen_asr import QwenUnsupportedLanguageError
 
 
 class StubApplication:
@@ -140,6 +141,33 @@ def test_main_passes_an_explicit_valid_language_to_the_application(
 
     assert application.commands[0].language == "en-GB"
     capsys.readouterr()
+
+
+def test_cli_reports_unsupported_qwen_language_as_one_bounded_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    class UnsupportedLanguageApplication:
+        def recognize(self, _command: AsrCommand) -> AsrSuccess:
+            raise QwenUnsupportedLanguageError("Qwen ASR does not support language tag: cy")
+
+    monkeypatch.setattr(
+        asr_cli, "build_application", lambda **_: UnsupportedLanguageApplication()
+    )
+
+    assert (
+        asr_cli.main(
+            [str(tmp_path / "task"), "--model", "qwen3-asr-1.7b", "--language", "cy"]
+        )
+        == 1
+    )
+
+    assert capsys.readouterr() == (
+        "",
+        'ERROR [execution-provider] model="qwen3-asr-1.7b": '
+        "Qwen ASR does not support language tag: cy\n",
+    )
 
 
 @pytest.mark.parametrize(

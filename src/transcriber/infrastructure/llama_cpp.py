@@ -245,11 +245,14 @@ class _LlamaCppSession(ExecutionProviderSession):
             raise ExecutionProviderFailure(
                 message="provider recognition failed", diagnostic=self._diagnostic()
             )
-        payload = self._encode_request(
-            audio_path=request.audio_path,
-            recognition_context=request.recognition_context,
-            language=request.language,
-        )
+        try:
+            payload = self._encode_request(
+                audio_path=request.audio_path,
+                recognition_context=request.recognition_context,
+                language=request.language,
+            )
+        except ValueError as error:
+            raise ExecutionProviderFailure(message=str(error)) from error
         deadline = self._monotonic_clock() + timeout_seconds
         try:
             response = self._transport.recognize(
