@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import importlib
 import sys
-from decimal import Decimal
 from pathlib import Path
 from types import ModuleType
-from typing import Protocol, cast
+from typing import Final, Protocol, cast
+
+_FRAME_LENGTH_SAMPLES: Final = 400
+_FRAME_SHIFT_SAMPLES: Final = 160
 
 
 class FireRedPostprocessingError(RuntimeError):
@@ -27,10 +29,6 @@ class _UpstreamPostprocessor(Protocol):
     ) -> None: ...
 
     def process(self, probabilities: list[float]) -> list[int]: ...
-
-    def decision_to_segment(
-        self, decisions: list[int], wav_dur: float
-    ) -> list[tuple[float, float]]: ...
 
 
 def _load_postprocessor() -> type[_UpstreamPostprocessor]:
@@ -65,12 +63,31 @@ def _load_postprocessor() -> type[_UpstreamPostprocessor]:
     return cast(type[_UpstreamPostprocessor], module.VadPostprocessor)
 
 
-def _seconds_to_sample(value: float) -> int:
-    samples = Decimal(str(value)) * Decimal(16_000)
-    integral = samples.to_integral_value()
-    if samples != integral or integral < 0:
-        raise FireRedPostprocessingError("upstream returned a non-sample-aligned timestamp")
-    return int(integral)
+def _decisions_to_sample_intervals(
+    decisions: list[int], total_samples: int
+) -> tuple[tuple[int, int], ...]:
+    """Map binary upstream frame decisions onto Canonical Audio samples."""
+    intervals: list[tuple[int, int]] = []
+    start_sample: int | None = None
+
+    for index, decision in enumerate(decisions):
+        if type(decision) is not int or decision not in (0, 1):
+            raise FireRedPostprocessingError("upstream decisions must be binary integers")
+        sample_position = index * _FRAME_SHIFT_SAMPLES
+        if decision == 1 and start_sample is None:
+            start_sample = sample_position
+        elif decision == 0 and start_sample is not None:
+            intervals.append((start_sample, sample_position))
+            start_sample = None
+
+    if start_sample is not None:
+        end_sample = min(
+            len(decisions) * _FRAME_SHIFT_SAMPLES + _FRAME_LENGTH_SAMPLES,
+            total_samples,
+        )
+        intervals.append((start_sample, end_sample))
+
+    return tuple(intervals)
 
 
 class FireRedPostprocessor:
@@ -94,11 +111,7 @@ class FireRedPostprocessor:
             processor_type = _load_postprocessor()
             processor = processor_type(5, 0.4, 20, max_speech_frame, 20, 201, 50)
             decisions = processor.process(list(probabilities))
-            timestamps = processor.decision_to_segment(decisions, total_samples / 16_000)
-            return tuple(
-                (_seconds_to_sample(start_seconds), _seconds_to_sample(end_seconds))
-                for start_seconds, end_seconds in timestamps
-            )
+            return _decisions_to_sample_intervals(decisions, total_samples)
         except FireRedPostprocessingError:
             raise
         except Exception as error:

@@ -131,7 +131,7 @@ def test_malformed_provider_output_fails_at_probability_decode_boundary() -> Non
     assert raised.value.operation == "decode-probabilities"
 
 
-def test_real_provider_output_is_adapted_without_reinterpretation(
+def test_real_provider_output_maps_to_valid_integer_sample_intervals(
     real_vad_paths: RealVadPaths,
 ) -> None:
     runner = RecordingProcessRunner()
@@ -148,9 +148,10 @@ def test_real_provider_output_is_adapted_without_reinterpretation(
         max_speech_frame=3_000,
         total_samples=document.audio.total_samples,
     )
+    canonical_audio = CanonicalAudio(document.audio.total_samples)
     segments = convert_sample_intervals(
         tuple(SampleInterval(start, end) for start, end in upstream_intervals),
-        CanonicalAudio(document.audio.total_samples),
+        canonical_audio,
     )
 
     assert len(runner.calls) == 1
@@ -158,6 +159,22 @@ def test_real_provider_output_is_adapted_without_reinterpretation(
     assert argv[argv.index("--audio") + 1] == str(real_vad_paths.sample)
     assert shell is False
     assert document.frames.frame_count == len(document.frames.probabilities)
+    assert all(type(interval) is tuple and len(interval) == 2 for interval in upstream_intervals)
+    assert all(
+        type(boundary) is int
+        for interval in upstream_intervals
+        for boundary in interval
+    )
+    assert all(
+        0 <= start < end <= canonical_audio.total_samples
+        for start, end in upstream_intervals
+    )
+    assert all(
+        right_start >= left_end
+        for (_, left_end), (right_start, _) in zip(
+            upstream_intervals, upstream_intervals[1:], strict=False
+        )
+    )
     assert tuple((segment.start_sample, segment.end_sample) for segment in segments) == (
         upstream_intervals
     )
@@ -253,6 +270,40 @@ def test_complete_cli_workflow_publishes_corresponding_artifacts_and_one_diagnos
     _assert_diagnostic_shape(diagnostic)
     with capsys.disabled():
         print(diagnostic, flush=True)
+
+
+def test_non_millisecond_eof_source_completes_cli_workflow(
+    real_vad_paths: RealVadPaths,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    no_network: None,
+) -> None:
+    task_directory = (tmp_path / "fabian-task").resolve()
+    source = real_vad_paths.repository_root / "fixtures" / "fabian_cut.16.wav"
+
+    status = cli.main([str(source), str(task_directory)])
+
+    captured = capsys.readouterr()
+    manifest = decode_manifest((task_directory / "manifest.json").read_bytes())
+    assert status == 0
+    assert captured.err == ""
+    assert captured.out == (
+        f"task_work_directory={task_directory}\n"
+        f"canonical_audio={task_directory / 'prepared.wav'}\n"
+        f"manifest={task_directory / 'manifest.json'}\n"
+        f"segment_count={len(manifest.segments)}\n"
+    )
+    assert manifest.audio.total_samples == 41_871_896
+    assert all(
+        0 <= segment.start_sample < segment.end_sample <= manifest.audio.total_samples
+        for segment in manifest.segments
+    )
+    assert manifest.segments[-1].end_sample == 41_871_896
+    assert all(
+        WaveFileReader(task_directory / segment.path).metadata.frame_count
+        == segment.duration_samples
+        for segment in manifest.segments
+    )
 
 
 @pytest.mark.parametrize(
