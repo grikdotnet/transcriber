@@ -316,7 +316,7 @@ remain green. Controlled tests never require local ignored Qwen or llama.cpp art
 
 | Role | Required model | Reasoning effort | Responsibility |
 |---|---|---|---|
-| Worker `W-TNNN` | `gpt-5.6-terra` | `medium` | Implement one executable task from `tasks.md`, record verification evidence, and submit both to `V-TNNN`. |
+| Worker `W-TNNN` | `gpt-5.6-terra` | `light` | Implement one executable task from `tasks.md`, record verification evidence, and submit both to `V-TNNN`. |
 | Validator `V-TNNN` | `gpt-5.6-sol` | `medium` | Independently check TNNN against its acceptance criteria, this plan, tests, architecture, and scope, then report to `S-ASR`. |
 | Supervisor `S-ASR` | `gpt-5.6-sol` | `light` | Review Validator evidence and accept TNNN or return actionable feedback to its Worker. |
 

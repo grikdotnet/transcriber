@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
-from transcriber.protocol.manifest import (
+from transcriber.domain.manifest import (
     ManifestAudio,
     ManifestSegment,
     SegmentManifest,
@@ -55,6 +56,16 @@ def test_empty_speech_manifest_is_valid() -> None:
     )
 
     assert decode_manifest(encode_manifest(manifest)) == manifest
+
+
+def test_decode_uses_payload_without_filesystem_access(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fail_filesystem_access(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("domain decoder must not access the filesystem")
+
+    monkeypatch.setattr(Path, "open", fail_filesystem_access)
+    monkeypatch.setattr(Path, "read_bytes", fail_filesystem_access)
+
+    assert decode_manifest(encode_manifest(valid_manifest())) == valid_manifest()
 
 
 @pytest.mark.parametrize("value", [True, False])

@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 transcriber-prepare = "transcriber.controller.cli:main"
+transcriber-asr = "transcriber.controller.asr_cli:main"
 
 [dependency-groups]
 dev = [
@@ -26,12 +27,16 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/transcriber"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/transcriber/resources/asr_models/qwen3-asr-1.7b.json" = "transcriber/resources/asr_models/qwen3-asr-1.7b.json"
+
 [tool.pytest.ini_options]
 addopts = "--strict-config --strict-markers --import-mode=importlib"
 pythonpath = ["."]
 testpaths = ["tests"]
 markers = [
   "real_vad: requires the local native FireRedVAD provider and supplied model assets",
+  "real_asr: requires the local llama.cpp provider and supplied Qwen ASR model assets",
 ]
 
 [tool.mypy]

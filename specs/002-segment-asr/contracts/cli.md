@@ -14,6 +14,10 @@ transcriber-asr TASK_WORK_DIRECTORY --model MODEL_ID [--language auto|LANGUAGE_T
 
 The command has no subcommands and no model-listing operation.
 
+Its fixed local prerequisites are `vendor/llama-server`,
+`models/qwen3-asr-1.7b/Qwen3-ASR-1.7B-Q8_0.gguf`, and
+`models/qwen3-asr-1.7b/mmproj-Qwen3-ASR-1.7B-Q8_0.gguf`.
+
 | Input | Required | Meaning |
 |---|---:|---|
 | `TASK_WORK_DIRECTORY` | yes | Existing directory created by successful media preparation |
@@ -40,6 +44,11 @@ TASK_WORK_DIRECTORY/
 
 The command reads the existing schema-v1 Segment Manifest. A valid but empty `segments` array is a
 runtime missing-input failure.
+Every Segment path must remain beneath `TASK_WORK_DIRECTORY/segments/`.
+Before provider startup, every referenced Segment path must equal its exact index-derived
+`segments/segment-NNNN.wav` form. Its resolved filesystem target remains beneath
+`TASK_WORK_DIRECTORY/segments/`; the target exists with canonical WAV properties and exact
+manifest duration, verified by exact frame/sample count.
 
 The zero-segment missing-input case uses the public failure stage `segment-manifest`.
 
@@ -152,4 +161,6 @@ Explicit language:
 transcriber-asr /absolute/path/to/task --model qwen3-asr-1.7b --language en-GB
 ```
 
-No command in this contract downloads model artifacts or Execution Providers.
+The GUI owns enablement and sequencing; `transcriber-asr` never starts, waits for, monitors, or
+repeats segmentation. `transcriber-asr` does not download model artifacts or Execution Providers
+and does not build an Execution Provider.

@@ -33,6 +33,17 @@ def test_project_metadata_declares_package_and_console_entry_point() -> None:
     assert metadata["tool"]["hatch"]["build"]["targets"]["wheel"]["packages"] == ["src/transcriber"]
 
 
+def test_project_metadata_explicitly_includes_the_qwen_model_manifest() -> None:
+    metadata_path = REPOSITORY_ROOT / "pyproject.toml"
+    metadata = tomllib.loads(metadata_path.read_text(encoding="utf-8"))
+
+    force_include = metadata["tool"]["hatch"]["build"]["targets"]["wheel"]["force-include"]
+
+    assert force_include["src/transcriber/resources/asr_models/qwen3-asr-1.7b.json"] == (
+        "transcriber/resources/asr_models/qwen3-asr-1.7b.json"
+    )
+
+
 def test_console_entry_point_loads_a_callable() -> None:
     entry_point = next(
         entry_point

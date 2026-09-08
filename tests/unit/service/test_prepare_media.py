@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
-from transcriber.service.prepare_media import PreparationStage, PrepareMedia
 
 from tests.support.call_log import CallLog
+from transcriber.domain.manifest import SegmentManifest, encode_manifest
 from transcriber.infrastructure.wave_files import WaveMetadata
 from transcriber.protocol.cli import PrepareCommand, PrepareFailure, PrepareSuccess
 from transcriber.protocol.firered_probabilities import (
@@ -14,7 +14,7 @@ from transcriber.protocol.firered_probabilities import (
     ProbabilityAudio,
     ProbabilityFrames,
 )
-from transcriber.protocol.manifest import SegmentManifest, encode_manifest
+from transcriber.service.prepare_media import PreparationStage, PrepareMedia
 
 
 class _BoundaryFailure(RuntimeError):

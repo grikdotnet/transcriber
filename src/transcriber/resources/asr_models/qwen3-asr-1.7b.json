@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "qwen3-asr-1.7b",
+  "display_name": "Qwen3-ASR 1.7B Q8_0",
+  "source_url": "https://huggingface.co/ggml-org/Qwen3-ASR-1.7B-GGUF",
+  "execution_provider": "llama-cpp",
+  "capabilities": {
+    "context": true,
+    "language": "optional"
+  },
+  "artifacts": {
+    "root": "qwen3-asr-1.7b",
+    "files": {
+      "model": {
+        "path": "Qwen3-ASR-1.7B-Q8_0.gguf",
+        "sha256": "58e22d0532d4eacaf034cfac17a6fed159f37c41390c710186783be439d1fc57"
+      },
+      "audio_projector": {
+        "path": "mmproj-Qwen3-ASR-1.7B-Q8_0.gguf",
+        "sha256": "46c1d533af3f354ceb37ce855dbceff7da7fa7cf1e6a523df3b13440bd164c0d"
+      }
+    }
+  }
+}

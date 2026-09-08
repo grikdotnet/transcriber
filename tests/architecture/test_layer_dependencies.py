@@ -36,6 +36,22 @@ ALLOWED_DEPENDENCIES = {
     "controller": {"protocol", "domain", "service", "composition", "controller"},
 }
 
+PLANNED_ASR_MODULE_LAYERS = {
+    "src/transcriber/domain/manifest.py": "domain",
+    "src/transcriber/domain/transcript.py": "domain",
+    "src/transcriber/protocol/asr_cli.py": "protocol",
+    "src/transcriber/protocol/asr_model_manifest.py": "protocol",
+    "src/transcriber/protocol/qwen_asr.py": "protocol",
+    "src/transcriber/infrastructure/asr_files.py": "infrastructure",
+    "src/transcriber/infrastructure/execution_provider.py": "infrastructure",
+    "src/transcriber/infrastructure/llama_cpp.py": "infrastructure",
+    "src/transcriber/infrastructure/process.py": "infrastructure",
+    "src/transcriber/service/prepare_media.py": "service",
+    "src/transcriber/service/recognize_segments.py": "service",
+    "src/transcriber/composition/application.py": "composition",
+    "src/transcriber/controller/asr_cli.py": "controller",
+}
+
 
 def _python_dependencies(source: Path) -> set[str]:
     tree = ast.parse(source.read_text(encoding="utf-8"), filename=str(source))
@@ -69,6 +85,74 @@ def _native_dependencies(source: Path) -> set[str]:
     return dependencies
 
 
+def _forbidden_python_dependencies(layer: str, source: Path) -> set[str]:
+    return _python_dependencies(source) - ALLOWED_DEPENDENCIES[layer]
+
+
+def _python_import_fixture(tmp_path: Path, dependency: str) -> Path:
+    source = tmp_path / "fixture.py"
+    source.write_text(
+        f"from transcriber.{dependency} import fixture\n",
+        encoding="utf-8",
+    )
+    return source
+
+
+@pytest.mark.parametrize(
+    ("layer", "dependency"),
+    (
+        ("infrastructure", "protocol"),
+        ("infrastructure", "domain"),
+        ("controller", "infrastructure"),
+    ),
+)
+def test_python_layer_rejects_controlled_illegal_dependency(
+    tmp_path: Path,
+    layer: str,
+    dependency: str,
+) -> None:
+    source = _python_import_fixture(tmp_path, dependency)
+
+    forbidden = _forbidden_python_dependencies(layer, source)
+
+    assert forbidden == {dependency}
+
+
+@pytest.mark.parametrize(
+    ("layer", "dependency"),
+    tuple(
+        (layer, dependency)
+        for layer, dependencies in ALLOWED_DEPENDENCIES.items()
+        for dependency in dependencies
+    ),
+)
+def test_python_layer_allows_each_controlled_permitted_dependency(
+    tmp_path: Path,
+    layer: str,
+    dependency: str,
+) -> None:
+    source = _python_import_fixture(tmp_path, dependency)
+
+    forbidden = _forbidden_python_dependencies(layer, source)
+
+    assert not forbidden
+
+
+@pytest.mark.parametrize(
+    ("module_path", "layer"),
+    tuple(PLANNED_ASR_MODULE_LAYERS.items()),
+)
+def test_planned_asr_module_has_one_declared_layer(
+    module_path: str,
+    layer: str,
+) -> None:
+    path = Path(module_path)
+
+    assert path.parts[:2] == ("src", "transcriber")
+    assert path.parts[2] == layer
+    assert layer in LAYERS
+
+
 @pytest.mark.parametrize("layer", LAYERS)
 def test_python_layer_exists_and_has_only_allowed_dependencies(layer: str) -> None:
     package = PYTHON_ROOT / layer
@@ -76,7 +160,7 @@ def test_python_layer_exists_and_has_only_allowed_dependencies(layer: str) -> No
     assert (package / "__init__.py").is_file()
 
     for source in package.rglob("*.py"):
-        forbidden = _python_dependencies(source) - ALLOWED_DEPENDENCIES[layer]
+        forbidden = _forbidden_python_dependencies(layer, source)
         assert not forbidden, f"{source} imports forbidden layers: {sorted(forbidden)}"
 
 

@@ -8,11 +8,11 @@ from pathlib import Path
 from typing import Protocol, cast
 
 from transcriber.domain.audio import CanonicalAudio
+from transcriber.domain.manifest import ManifestAudio, ManifestSegment, SegmentManifest
 from transcriber.domain.segments import SampleInterval, convert_sample_intervals
 from transcriber.infrastructure.wave_files import WaveMetadata
 from transcriber.protocol.cli import FailureStage, PrepareCommand, PrepareFailure, PrepareSuccess
 from transcriber.protocol.firered_probabilities import FireRedProbabilityDocument
-from transcriber.protocol.manifest import ManifestAudio, ManifestSegment, SegmentManifest
 
 
 class PreparationStage(Enum):

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from transcriber.protocol.manifest import ManifestAudio, SegmentManifest, encode_manifest
+from transcriber.domain.manifest import ManifestAudio, SegmentManifest, encode_manifest
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 

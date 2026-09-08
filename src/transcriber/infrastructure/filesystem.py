@@ -65,7 +65,9 @@ class AtomicFileWriter:
                 delete=False,
             ) as staged:
                 temporary = Path(staged.name)
-                staged.write(content)
+                written = staged.write(content)
+                if written != len(content):
+                    raise OSError("staged write was incomplete")
                 staged.flush()
                 os.fsync(staged.fileno())
             os.replace(temporary, destination)

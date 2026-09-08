@@ -30,6 +30,8 @@ def test_repository_paths_are_independent_of_current_working_directory(
         ffmpeg=REPOSITORY_ROOT / "vendor" / "ffmpeg",
         firered_model_directory=REPOSITORY_ROOT / "models" / "firered-vad.ncnn",
         firered_provider=REPOSITORY_ROOT / "vendor" / "firered-vad-ncnn",
+        llama_provider=REPOSITORY_ROOT / "vendor" / "llama-server",
+        qwen_model_directory=REPOSITORY_ROOT / "models" / "qwen3-asr-1.7b",
     )
     assert all(
         path.is_absolute()
@@ -38,6 +40,8 @@ def test_repository_paths_are_independent_of_current_working_directory(
             paths.ffmpeg,
             paths.firered_model_directory,
             paths.firered_provider,
+            paths.llama_provider,
+            paths.qwen_model_directory,
         )
     )
 

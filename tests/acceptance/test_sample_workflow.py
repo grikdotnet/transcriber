@@ -12,13 +12,13 @@ from tests.conftest import RealVadPaths, enforce_real_vad_prerequisites
 from tests.support.process import FakeCompletedProcess, FakeProcessRunner
 from transcriber.controller import cli
 from transcriber.domain.audio import CanonicalAudio
+from transcriber.domain.manifest import ManifestSegment, decode_manifest
 from transcriber.domain.segments import SampleInterval, convert_sample_intervals
 from transcriber.infrastructure.firered_ncnn import FireRedNcnnFailure, FireRedNcnnProcess
 from transcriber.infrastructure.firered_postprocessing import FireRedPostprocessor
 from transcriber.infrastructure.process import CompletedProcessData, SubprocessRunner
 from transcriber.infrastructure.wave_files import WaveFileReader
 from transcriber.protocol.firered_probabilities import decode_probability_document
-from transcriber.protocol.manifest import ManifestSegment, decode_manifest
 
 pytestmark = pytest.mark.real_vad
 

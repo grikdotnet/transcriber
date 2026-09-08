@@ -1,4 +1,4 @@
-"""Typed segment-manifest entities and deterministic schema-v1 codec."""
+"""Domain Segment Manifest entities and deterministic schema-v1 codec."""
 
 from __future__ import annotations
 

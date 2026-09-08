@@ -147,3 +147,33 @@ segment index when recognition had started. No failure emits a final `transcript
 - Simultaneous ASR invocations for one task/model are unsupported and are not tested.
 - Model downloads, provider builds, catalog listing, timestamps, diarization, batching, and
   VibeVoice/Canary adapters are not part of this delivery.
+
+## Public command summary
+
+The GUI owns enablement and sequencing; ASR is available only after preparation succeeds. The
+independent command is:
+
+```text
+transcriber-asr TASK_WORK_DIRECTORY --model MODEL_ID [--language auto|LANGUAGE_TAG]
+```
+
+The fixed local prerequisites are `vendor/llama-server`,
+`models/qwen3-asr-1.7b/Qwen3-ASR-1.7B-Q8_0.gguf`, and
+`models/qwen3-asr-1.7b/mmproj-Qwen3-ASR-1.7B-Q8_0.gguf`. `--language` is `auto` or a value with a
+2-8 letter ASCII primary subtag followed by zero or more hyphen-separated 1-8 character ASCII
+alphanumeric subtags. Segment audio is read below `TASK_WORK_DIRECTORY/segments/`.
+
+Before provider startup, every referenced Segment path must equal its exact index-derived `segments/segment-NNNN.wav` form. Its resolved filesystem target remains beneath `TASK_WORK_DIRECTORY/segments/`; the target exists with canonical WAV properties and exact manifest duration, verified by exact frame/sample count.
+
+The representative progress record is `recognized_segments=1 total_segments=10`; successful
+completion ends with `transcript=/absolute/path/to/sample-task/transcripts-qwen3-asr-1.7b/transcript.txt`.
+Failures use `ERROR [STAGE] model=MODEL_ID: MESSAGE`.
+
+| Status | Meaning |
+|---:|---|
+| `0` | Complete Transcript published |
+| `1` | Runtime failure, timeout, or cancellation |
+| `2` | Invalid arguments, model ID, or language tag |
+
+`transcriber-asr` does not download model artifacts or Execution Providers and does not build an
+Execution Provider.
