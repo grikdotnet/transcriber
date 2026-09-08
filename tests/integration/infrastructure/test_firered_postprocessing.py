@@ -45,34 +45,25 @@ def test_passes_complete_probabilities_and_exact_settings_once(
 
         def process(self, probabilities: list[float]) -> list[int]:
             calls.append(("process", probabilities))
-            return [0, 1, 1, 0, 1]
-
-        def decision_to_segment(
-            self, decisions: list[int], wav_dur: float
-        ) -> list[tuple[float, float]]:
-            calls.append(("segments", decisions, wav_dur))
-            return [(0.01, 0.03), (0.04, 0.05)]
+            return [0, 1, 1, 0, 0, 1, 1, 0]
 
     monkeypatch.setattr(adapter_module, "_load_postprocessor", lambda: FakeUpstream)
-    probabilities = (0.11, 0.22, 0.33, 0.44, 0.55)
+    probabilities = (0.11, 0.22, 0.33, 0.44, 0.55, 0.66, 0.77, 0.88)
 
     intervals = FireRedPostprocessor().process(
-        probabilities, max_speech_frame=3_000, total_samples=800
+        probabilities, max_speech_frame=3_000, total_samples=1_600
     )
 
     assert calls == [
         ("init", 5, 0.4, 20, 3_000, 20, 201, 50),
         ("process", list(probabilities)),
-        ("segments", [0, 1, 1, 0, 1], 0.05),
     ]
-    assert intervals == ((160, 480), (640, 800))
+    assert intervals == ((160, 480), (800, 1_120))
 
 
-def test_passes_canonical_duration_and_preserves_short_eof_remainder(
+def test_maps_trailing_speech_to_exact_canonical_audio_end(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    calls: list[tuple[object, ...]] = []
-
     class FakeUpstream:
         def __init__(self, *_settings: object) -> None:
             pass
@@ -80,18 +71,61 @@ def test_passes_canonical_duration_and_preserves_short_eof_remainder(
         def process(self, probabilities: list[float]) -> list[int]:
             return [1] * len(probabilities)
 
-        def decision_to_segment(
-            self, decisions: list[int], wav_dur: float
-        ) -> list[tuple[float, float]]:
-            calls.append(("segments", decisions, wav_dur))
-            return [(0.0, 0.3), (0.3, wav_dur)]
+    monkeypatch.setattr(adapter_module, "_load_postprocessor", lambda: FakeUpstream)
+    assert FireRedPostprocessor().process(
+        (0.7,) * 261_697, 3_000, total_samples=41_871_896
+    ) == ((0, 41_871_896),)
+
+
+@pytest.mark.parametrize("decisions", [[], [0, 0, 0]])
+def test_maps_empty_and_all_silence_decisions_to_no_intervals(
+    monkeypatch: pytest.MonkeyPatch, decisions: list[int]
+) -> None:
+    class FakeUpstream:
+        def __init__(self, *_settings: object) -> None:
+            pass
+
+        def process(self, _probabilities: list[float]) -> list[int]:
+            return decisions
 
     monkeypatch.setattr(adapter_module, "_load_postprocessor", lambda: FakeUpstream)
-    assert FireRedPostprocessor().process((0.7,) * 31, 3_000, total_samples=5_360) == (
-        (0, 4_800),
-        (4_800, 5_360),
+
+    assert FireRedPostprocessor().process((0.7,) * len(decisions), 3_000, 5_000) == ()
+
+
+def test_maps_multiple_closed_speech_runs_to_integer_sample_intervals(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeUpstream:
+        def __init__(self, *_settings: object) -> None:
+            pass
+
+        def process(self, _probabilities: list[float]) -> list[int]:
+            return [0, 1, 1, 0, 0, 1, 0]
+
+    monkeypatch.setattr(adapter_module, "_load_postprocessor", lambda: FakeUpstream)
+
+    assert FireRedPostprocessor().process((0.7,) * 7, 3_000, 5_000) == (
+        (160, 480),
+        (800, 960),
     )
-    assert calls == [("segments", [1] * 31, 0.335)]
+
+
+@pytest.mark.parametrize("decision", [True, -1, 2, 1.0, "1"])
+def test_rejects_non_binary_upstream_decisions(
+    monkeypatch: pytest.MonkeyPatch, decision: object
+) -> None:
+    class FakeUpstream:
+        def __init__(self, *_settings: object) -> None:
+            pass
+
+        def process(self, _probabilities: list[float]) -> list[int]:
+            return [decision]  # type: ignore[list-item]
+
+    monkeypatch.setattr(adapter_module, "_load_postprocessor", lambda: FakeUpstream)
+
+    with pytest.raises(FireRedPostprocessingError, match="binary"):
+        FireRedPostprocessor().process((0.7,), 3_000, 400)
 
 
 def test_translates_upstream_failures(monkeypatch: pytest.MonkeyPatch) -> None:
