@@ -66,8 +66,8 @@ MUST identify which Validator and Supervisor receive each Worker's result.
 
 Sub-agents MUST use the following model and reasoning-effort assignments:
 
-- Worker: `gpt-5.6-terra` with `medium` reasoning effort.
-- Validator: `gpt-5.6-sol` with `medium` reasoning effort.
+- Worker: `gpt-5.6-terra` with `light` reasoning effort.
+- Validator: `gpt-5.6-sol` with `light` reasoning effort.
 - Supervisor: `gpt-5.6-sol` with `light` reasoning effort.
 
 Each separate task MUST receive a newly created Worker and a newly created Validator. Both agents
