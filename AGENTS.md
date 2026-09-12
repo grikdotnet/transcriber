@@ -13,8 +13,10 @@ This repository uses the single-context domain documentation layout. See `docs/a
 ## Language
 
 - Prefer entity names over pronouns. Use a pronoun only when the pronoun's referent is clear.
+
 - Use unambiguous phrases. Examples:
-Bad: "terminal command".
-Good: either "CLI command" or "terminating command," according to the intended meaning.
-Bad: "Should the provider operation receive context?".
-Good: "Should the ASR provider's recognize() method receive context?"
+Instead of "terminal command" write either "CLI command" or "terminating command," according to the intended meaning.
+
+Instead of "Should the provider operation receive context?" write clear: "Should the ASR provider's recognize() method receive context?"
+
+Instead of unconventional lexic: "project-owned internal collaborators" use commonly used terms: "components that another component calls"

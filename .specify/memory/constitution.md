@@ -60,36 +60,34 @@ Every step of a multi-step plan MUST use `<action> -> verify: <deterministic che
 
 Prefer to divide implementation into sub-agent tasks with explicit ownership, dependencies, order,
 acceptance criteria, and safe parallelization boundaries. Where sub-agents are used, the plan MUST
-define three distinct roles: Worker, Validator, and Supervisor. A plan MAY assign multiple agents
-to each role, but the three roles for a given work item MUST be held by different agents. The plan
-MUST identify which Validator and Supervisor receive each Worker's result.
+define three distinct roles: Worker, Validator, and Orchestrator. Three roles for a given work item MUST be held by different agents. The plan MUST identify which Validator receive each Worker's result.
 
+The root process acts as an Orchestrator.
 Sub-agents MUST use the following model and reasoning-effort assignments:
 
 - Worker: `gpt-5.6-terra` with `light` reasoning effort.
 - Validator: `gpt-5.6-sol` with `light` reasoning effort.
-- Supervisor: `gpt-5.6-sol` with `light` reasoning effort.
 
 Each separate task MUST receive a newly created Worker and a newly created Validator. Both agents
 MUST start the task with clean context windows containing only the task-specific context and
 project instructions needed to perform their roles. A Worker or Validator assigned to one task
-MUST NOT be reused for a separate task. The same Supervisor MAY coordinate multiple tasks.
+MUST NOT be reused for a separate task. The same Orchestrator coordinates multiple tasks.
 
 The Worker implements the task, records verification evidence, and submits both to the Validator.
 The Validator independently checks the result against the task's acceptance criteria, approved
-plan, tests, architecture rules, and scope, then reports findings and evidence to the Supervisor.
-The Supervisor reviews the Validator's report and either accepts the work or returns actionable
+plan, tests, architecture rules, and scope, then reports findings and evidence to the Orchestrator.
+The Orchestrator reviews the Validator's report and either accepts the work or returns actionable
 feedback to the Worker.
 
 The Worker and Validator assignments MUST remain stable for the full lifecycle of a task. When the
-Supervisor returns work, the same Worker that implemented the task MUST revise it and resubmit it
+Orchestrator returns work, the same Worker that implemented the task MUST revise it and resubmit it
 to the same Validator that performed the preceding review. That Validator MUST repeat validation
-and send an updated report to the Supervisor. A cycle starts when the Worker submits a result and
-ends when the Supervisor accepts or returns it; the initial submission is cycle 1. A work item MUST
-NOT exceed three Worker → Validator → Supervisor cycles.
+and send an updated report to the Orchestrator. A cycle starts when the Worker submits a result and
+ends when the Orchestrator accepts or returns it; the initial submission is cycle 1. A work item MUST
+NOT exceed three Worker → Validator → Orchestrator cycles.
 
-If the Supervisor does not accept the work by the end of cycle 3, all agent work on that item MUST
-halt. The Supervisor MUST prepare a manual-review summary containing the work item's scope, each
+If the Orchestrator does not accept the work by the end of cycle 3, all agent work on that item MUST
+halt. The Orchestrator MUST prepare a manual-review summary containing the work item's scope, each
 attempt and its changes, validation findings and evidence, unresolved acceptance criteria or
 issues, and the decision required. Work MUST NOT resume until a manual reviewer records a decision
 and explicitly authorizes the next action.
@@ -102,7 +100,7 @@ and explicitly authorizes the next action.
 - Implementations MUST prefer existing project data types and contracts over ad-hoc dictionaries,
   tuples, or parallel representations.
 - Code MUST NOT add unrequested flexibility, optional behavior, abstraction, or configuration.
-- Reviews MUST verify test-first evidence, coverage, scope traceability, simplicity, type correctness, responsibility boundaries, and architecture classifications.
+- Reviews MUST verify evidence, coverage, scope traceability, simplicity, type correctness, responsibility boundaries, and architecture classifications.
 
 ## Governance
 
@@ -116,10 +114,7 @@ Versions follow semantic versioning: MAJOR for incompatible principle removals o
 new principles or materially expanded requirements, and PATCH for non-semantic clarifications.
 
 Every implementation plan and code review MUST check constitution compliance. Reviewers MUST
-reject work lacking evidence that tests were created before implementation, automated verification,
-task traceability, required architecture classification, or deterministic verification. Evidence
-of executing a new test before implementation is NOT required. Complexity and claimed deviations
-MUST be resolved through a constitution amendment or design change; informal exceptions are
+reject work lacking automated verification, task traceability, required architecture classification, or deterministic verification. Evidence of executing a new test before implementation is NOT required. Complexity and claimed deviations MUST be resolved through a constitution amendment or design change; informal exceptions are
 forbidden.
 
 **Version**: 2.1.0 | **Ratified**: 2026-07-30 | **Last Amended**: 2026-09-07
