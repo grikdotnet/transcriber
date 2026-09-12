@@ -21,6 +21,13 @@ CLI validation and fail later while encoding the first Speech Segment. Examples 
 The late failure violates the provider contract and makes public language handling depend on an
 undocumented adapter restriction.
 
+The initial Task 3 implementation also tested an artificial failure path: the controller test
+replaced the Application with a test double that raised `QwenUnsupportedLanguageError` directly.
+In the shipped path, the llama.cpp Execution Provider converts that Protocol error to
+`ExecutionProviderFailure`, and `RecognizeSegments` returns a segment-specific `AsrFailure` for
+the controller to render. The direct controller exception branch is therefore unreachable and
+does not prove the `segment=0` diagnostic required by FR-018.
+
 ## Authoritative requirements
 
 - `specs/002-segment-asr/spec.md` FR-002 defines the accepted language-tag grammar.
@@ -41,7 +48,11 @@ undocumented adapter restriction.
    map to `English`; `pt` and `pt-BR` map to `Portuguese`.
 5. A syntactically valid tag with an unsupported primary subtag fails at the Qwen protocol
    boundary with a deterministic, actionable error before an HTTP request is sent.
-6. The mapping remains an internal provider wire concern. The CLI, ASR Model Manifest, and public
+6. The llama.cpp Execution Provider translates that error to its provider failure contract;
+   `RecognizeSegments` attaches the active Speech Segment index; and the controller renders the
+   returned `AsrFailure` as one bounded `execution-provider` diagnostic.
+7. The controller does not import or catch `QwenUnsupportedLanguageError`.
+8. The mapping remains an internal provider wire concern. The CLI, ASR Model Manifest, and public
    model-selection behavior do not gain a supported-language catalog.
 
 ## Supported mappings
@@ -91,12 +102,15 @@ subtag into a provider language while encoding each recognition request.
   encoding, and the public protocol error for an unmapped primary subtag.
 - `src/transcriber/infrastructure/llama_cpp.py`: only if the existing Execution Provider boundary
   does not already prevent transport after request-encoding failure.
-- `src/transcriber/controller/asr_cli.py`: only the minimum error mapping needed to render the
-  unsupported-provider-language failure through the existing CLI error contract.
+- `src/transcriber/controller/asr_cli.py`: remove the Qwen-specific import and unreachable
+  exception branch; render only the application-owned result.
 - `tests/unit/protocol/test_qwen_asr.py`: exact request-encoding and unsupported-language tests.
 - `tests/integration/infrastructure/test_llama_cpp.py`: controlled Execution Provider boundary
   tests.
-- `tests/unit/controller/test_asr_cli.py`: public CLI diagnostic test.
+- `tests/unit/controller/test_asr_cli.py`: remove the test that directly raises the Qwen Protocol
+  error from a replacement Application.
+- `tests/acceptance/test_asr_workflow.py`: controlled public CLI test through the real
+  Application, Service, and llama.cpp Execution Provider adapter.
 - `specs/002-segment-asr/evidence/`: truthful red/green and final verification records.
 
 No Domain entity, ASR Model Manifest schema, service interface, or public CLI grammar is changed.
@@ -111,11 +125,14 @@ No Domain entity, ASR Model Manifest schema, service interface, or public CLI gr
   deterministic wire bytes.
 - **Execution Provider failure propagation**: Infrastructure-layer behavior; prevents an HTTP
   recognition request when protocol encoding fails and does not reinterpret the language tag.
-- **CLI error mapping**: Controller-layer behavior; converts the owned failure into the existing
-  bounded public diagnostic without learning the Qwen mapping table.
+- **ASR failure mapping**: Service-layer behavior; converts the Execution Provider failure into a
+  segment-specific `AsrFailure`.
+- **CLI error rendering**: Controller-layer behavior; renders the application-owned `AsrFailure`
+  through the existing bounded public diagnostic without depending on Qwen-specific errors.
 
 The design keeps one responsibility per entity: Protocol translates and encodes, Infrastructure
-transports, and Controller renders. No new interface or extension point is authorized.
+transports, Service maps failures, and Controller renders. No new interface or extension point is
+authorized.
 
 ## Assumptions
 
@@ -149,8 +166,9 @@ Tests exercise behavior only through existing public project interfaces:
   the external provider boundary without making a real network request.
 - **CLI seam:** `transcriber-asr` observes exit status and bounded stderr output.
 
-Tests do not inspect a private mapping constant, mock project-owned internal collaborators, or
-assert Qwen recognition accuracy.
+Tests do not inspect a private mapping constant, replace the Application or Service with test
+doubles, or assert Qwen recognition accuracy. The CLI test controls only external process and HTTP
+boundaries.
 
 These seams are part of the approved plan. Any proposed test at another seam requires a plan
 update and project-owner approval before test creation.
@@ -283,9 +301,11 @@ bounded CLI diagnostic.
 2. `test_unsupported_qwen_language_sends_no_recognition_http_request` in
    `tests/integration/infrastructure/test_llama_cpp.py`, using a controlled provider transport and
    asserting that no recognition request crosses the external boundary.
-3. `test_cli_reports_unsupported_qwen_language_as_one_bounded_error` in
-   `tests/unit/controller/test_asr_cli.py`, asserting exit status, exact public stage and model ID,
-   one stderr line, and no stdout output.
+3. `test_asr_command_reports_unsupported_qwen_language_through_real_failure_flow` in
+   `tests/acceptance/test_asr_workflow.py`, using the real Application, Service, and llama.cpp
+   adapter with controlled external process and HTTP boundaries. The test asserts exit status,
+   exact public stage, model ID, `segment=0`, one stderr line, no stdout, and no recognition HTTP
+   request.
 
 **Implementation sequence:**
 
@@ -293,22 +313,26 @@ bounded CLI diagnostic.
    verify green.
 2. Create test 2 -> verify red -> stop unsupported-language processing before recognition
    transport -> verify green.
-3. Create test 3 -> verify red -> map the protocol failure into the existing CLI error renderer ->
-   verify green.
+3. Record the existing focused suite green -> create test 3 as a characterization of the shipped
+   failure mapping -> verify the test is green before refactoring -> remove the unreachable
+   Qwen-specific controller catch and artificial controller test -> verify test 3 remains green.
 
 **Acceptance criteria:**
 
 - Unsupported `cy` sends no recognition HTTP request.
-- The CLI reports one bounded, actionable error line through the established public renderer.
+- The CLI reports one bounded, actionable error line through the established public renderer,
+  including `segment=0`.
 - The error distinguishes a syntactically valid but provider-unsupported language from invalid
   language-tag syntax.
+- The controller does not import, name, or catch `QwenUnsupportedLanguageError`.
 - Existing provider cleanup guarantees remain green.
 - No test asserts third-party model behavior.
 
 ## Test plan
 
-1. Execute each named test individually for its red -> green cycle and retain the command and
-   result in feature 002 implementation evidence.
+1. Execute each mapping test individually for its red -> green cycle and retain the command and
+   result in feature 002 implementation evidence. For the behavior-preserving Controller cleanup,
+   record the focused suite and new characterization test green before refactoring.
 2. After each task, run the complete changed test module before handing the result to its
    Validator.
 3. After Task 3, run all Qwen codec, Execution Provider, ASR service, ASR controller, CLI contract,
@@ -345,8 +369,10 @@ Worker's conclusions:
   with the expected pre-fix failure recorded for this bug fix.
 - All new or changed functions declare parameter and return types.
 - The implementation remains confined to the Qwen protocol boundary except for tests and truthful
-  evidence updates, plus the minimum pre-authorized Infrastructure or Controller failure handling
-  proven necessary by Task 3's failing tests.
+  evidence updates, the minimum pre-authorized Infrastructure failure handling proven necessary by
+  Task 3's provider test, and the behavior-preserving removal of the unreachable Controller path.
+- The public CLI test covers Protocol -> Infrastructure -> Service -> Controller behavior, and the
+  controller has no Qwen-specific dependency or unreachable unsupported-language exception path.
 - Review confirms compliance with FR-002, FR-011, FR-012, and the execution-provider contract.
 - No public supported-language catalog or model-to-language selection behavior is introduced.
 - Independent validation confirms scope traceability, simplicity, type correctness, responsibility

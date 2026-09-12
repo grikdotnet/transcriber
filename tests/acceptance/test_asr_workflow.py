@@ -19,6 +19,7 @@ from tests.support.asr import (
     write_speech_segment,
 )
 from tests.support.call_log import CallLog
+from tests.support.managed_process import ManagedProcessDouble, ManagedProcessStarterDouble
 from transcriber.composition import application
 from transcriber.controller import asr_cli
 from transcriber.domain.manifest import encode_manifest
@@ -30,10 +31,12 @@ from transcriber.infrastructure.asr_files import (
     read_manifest_file,
 )
 from transcriber.infrastructure.execution_provider import (
+    ExecutionProvider,
     ExecutionProviderFailure,
     RecognitionRequest,
     RecognitionResult,
 )
+from transcriber.infrastructure.llama_cpp import LlamaCppExecutionProvider
 from transcriber.infrastructure.wave_files import WaveFileReader
 from transcriber.protocol.asr_model_manifest import AsrModelCapabilities
 from transcriber.protocol.qwen_asr import decode_qwen_response, encode_qwen_request
@@ -48,7 +51,7 @@ def _controlled_application(
     *,
     context_supported: bool = True,
     language_behavior: Literal["optional", "required"] = "optional",
-    provider: ControlledExecutionProvider | None = None,
+    provider: ExecutionProvider | None = None,
     missing_prerequisites: Callable[[], Sequence[str]] = lambda: (),
 ) -> application.Application:
     controlled_provider = provider or ControlledExecutionProvider(responses, log)
@@ -270,6 +273,77 @@ def test_asr_command_preserves_each_valid_boundary_language_tag(
         == 0
     )
     assert [request.language for request in provider.session.requests] == [language]
+
+
+def test_asr_command_reports_unsupported_qwen_language_through_real_failure_flow(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    class ControlledLoopbackTransport:
+        def __init__(self) -> None:
+            self.recognition_calls: list[bytes] = []
+
+        def health(self, *, host: str, port: int, timeout_seconds: float) -> bool:
+            assert host == "127.0.0.1"
+            assert port == 43127
+            assert timeout_seconds == 60.0
+            return True
+
+        def recognize(
+            self, *, host: str, port: int, payload: bytes, timeout_seconds: float
+        ) -> bytes:
+            self.recognition_calls.append(payload)
+            return b'{"choices":[]}'
+
+    task_work_directory = _write_controlled_task(tmp_path, 1)
+    process = ManagedProcessDouble()
+    transport = ControlledLoopbackTransport()
+    provider = LlamaCppExecutionProvider(
+        executable=REPOSITORY_ROOT / "vendor" / "llama-server",
+        model_path=(
+            REPOSITORY_ROOT
+            / "models"
+            / "qwen3-asr-1.7b"
+            / "Qwen3-ASR-1.7B-Q8_0.gguf"
+        ),
+        audio_projector_path=(
+            REPOSITORY_ROOT
+            / "models"
+            / "qwen3-asr-1.7b"
+            / "mmproj-Qwen3-ASR-1.7B-Q8_0.gguf"
+        ),
+        process_starter=ManagedProcessStarterDouble(process),
+        transport=transport,
+        encode_request=encode_qwen_request,
+        decode_response=decode_qwen_response,
+        endpoint_port=lambda: 43127,
+        monotonic_clock=lambda: 0.0,
+        sleeper=lambda _seconds: None,
+    )
+    built = _controlled_application((), CallLog(), provider=provider)
+    monkeypatch.setattr(asr_cli, "build_application", lambda **_: built)
+
+    assert (
+        asr_cli.main(
+            [
+                str(task_work_directory),
+                "--model",
+                "qwen3-asr-1.7b",
+                "--language",
+                "cy",
+            ]
+        )
+        == 1
+    )
+
+    assert transport.recognition_calls == []
+    assert process.terminate_calls == 1
+    assert capsys.readouterr() == (
+        "",
+        'ERROR [execution-provider] model="qwen3-asr-1.7b" segment=0: '
+        "Qwen ASR does not support language tag: cy\n",
+    )
 
 
 @pytest.mark.parametrize("language", ["a", "abcdefghi", "ab-", "ab--cd", "ab_12", "en_US"])
