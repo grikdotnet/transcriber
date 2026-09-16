@@ -54,6 +54,26 @@ _Avoid_: Engine, backend
 Recent transcript text supplied while recognizing the next speech segment.
 _Avoid_: Prompt, history
 
+**Recognition Token**:
+A provider-emitted ASR item with an exact text fragment and an exposed log probability. A token
+can contribute to more than one normalization span, and a normalization span can draw from multiple
+tokens.
+_Avoid_: Transcript word, normalized unit
+
+**Normalization Span**:
+The maximal non-empty sequence of consecutive recognized Unicode code points between guaranteed
+NFKC normalization boundaries within one speech segment. Its normalized text carries the minimum
+probability of its contributing recognition tokens and the recognized language active for its
+first code point.
+_Avoid_: Unit, character, word
+
+**Recognized Language**:
+The most recent language value reported by an execution provider for following recognized text
+within one speech segment. The value is unknown until that speech segment reports a language.
+_Avoid_: Requested language, detected language
+
 **Transcript**:
-The text assembled from speech segments recognized in segment-manifest order.
+The ordered collection of scored normalization spans assembled from speech segments recognized in
+Segment Manifest order. Text is derived by concatenating the spans' normalized text rather than
+stored as a second source of truth.
 _Avoid_: ASR output, transcription result
