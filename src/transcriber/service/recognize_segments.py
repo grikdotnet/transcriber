@@ -121,7 +121,9 @@ class RecognizeSegments:
                     ),
                     timeout_seconds=180.0,
                 )
-                transcript.append(recognition_result.text)
+                for token in recognition_result.tokens:
+                    transcript.append_token(token.text, token.log_probability)
+                transcript.finish_segment()
                 try:
                     self._progress(
                         AsrProgress(
@@ -168,6 +170,8 @@ class RecognizeSegments:
             if cleanup_failed:
                 assert isinstance(result, AsrFailure)
                 return result
+            if isinstance(progress_error, (KeyboardInterrupt, asyncio.CancelledError)):
+                return _failure(command, "cancelled", "task cancelled")
             raise progress_error
         assert result is not None
         return result

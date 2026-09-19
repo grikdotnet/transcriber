@@ -10,6 +10,7 @@ from transcriber.infrastructure.execution_provider import (
     ExecutionProviderSession,
     RecognitionRequest,
     RecognitionResult,
+    RecognitionToken,
 )
 
 
@@ -38,8 +39,58 @@ class ControlledSession(ExecutionProviderSession):
         self.stop_calls += 1
 
 
+def test_recognition_token_preserves_provider_values() -> None:
+    token = RecognitionToken(
+        token_id=321,
+        text="café 世界",
+        log_probability=float("-inf"),
+    )
+
+    assert token.token_id == 321
+    assert token.text == "café 世界"
+    assert token.log_probability == float("-inf")
+
+
+def test_recognition_result_preserves_ordered_tokens() -> None:
+    first_token = RecognitionToken(token_id=7, text="first ", log_probability=-0.1)
+    second_token = RecognitionToken(token_id=11, text="次", log_probability=-1.5)
+
+    result = RecognitionResult(tokens=(first_token, second_token))
+
+    assert result.tokens == (first_token, second_token)
+
+
+def test_recognition_result_represents_an_empty_success() -> None:
+    result = RecognitionResult(tokens=())
+
+    assert result.tokens == ()
+
+
+@pytest.mark.parametrize(
+    ("arguments", "message"),
+    (
+        ((None, "recognized", -0.1), "token_id"),
+        ((True, "recognized", -0.1), "token_id"),
+        ((7, 3, -0.1), "text"),
+        ((7, "recognized", True), "log_probability"),
+        ((7, "recognized", 0.1), "log_probability"),
+        ((7, "recognized", float("inf")), "log_probability"),
+        ((7, "recognized", float("nan")), "log_probability"),
+    ),
+)
+def test_recognition_token_rejects_invalid_provider_values(
+    arguments: tuple[object, object, object], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        RecognitionToken(
+            token_id=arguments[0],
+            text=arguments[1],
+            log_probability=arguments[2],
+        )
+
+
 def test_fresh_session_rejects_recognition_until_started() -> None:
-    session = ControlledSession(RecognitionResult(text="recognized"))
+    session = ControlledSession(RecognitionResult(tokens=()))
     request = RecognitionRequest(
         segment_index=0,
         audio_path=Path("/task/segments/segment-0000.wav"),
@@ -54,7 +105,7 @@ def test_fresh_session_rejects_recognition_until_started() -> None:
 
 
 def test_started_session_returns_empty_successful_text() -> None:
-    session = ControlledSession(RecognitionResult(text=""))
+    session = ControlledSession(RecognitionResult(tokens=()))
     request = RecognitionRequest(
         segment_index=2,
         audio_path=Path("/task/segments/segment-0002.wav"),
@@ -65,13 +116,13 @@ def test_started_session_returns_empty_successful_text() -> None:
     session.start()
     result = session.recognize(request)
 
-    assert result.text == ""
+    assert result.tokens == ()
     assert session.start_calls == 1
     assert session.recognition_requests == [request]
 
 
 def test_start_is_allowed_once_and_stop_is_idempotent() -> None:
-    session = ControlledSession(RecognitionResult(text="recognized"))
+    session = ControlledSession(RecognitionResult(tokens=()))
 
     session.start()
 

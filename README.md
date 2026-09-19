@@ -66,7 +66,7 @@ Before provider startup, every referenced Segment path must equal its exact inde
 
 Each completed segment prints `recognized_segments=1 total_segments=10` (with the actual,
 constant total). Success ends with
-`transcript=/absolute/path/to/sample-task/transcripts-qwen3-asr-1.7b/transcript.txt`; failures use
+`transcript=/absolute/path/to/sample-task/transcripts-qwen3-asr-1.7b/transcript.json`; failures use
 `ERROR [STAGE] model=MODEL_ID: MESSAGE` on stderr. Exit statuses are:
 
 | Status | Meaning |
@@ -75,7 +75,20 @@ constant total). Success ends with
 | `1` | Runtime failure, timeout, or cancellation |
 | `2` | Invalid arguments, model ID, or language tag |
 
+For model `qwen3-asr-1.7b`, the successful artifact is
+`TASK_WORK_DIRECTORY/transcripts-qwen3-asr-1.7b/transcript.json`. The file is compact UTF-8 JSON
+with one final LF and exactly one top-level `text` array. Each entry has exactly `text`
+(NFKC-normalized text) and `probability` (a finite number from `0` through `1`), in that order:
+
+```json
+{"text":[{"text":"é","probability":0.7},{"text":".","probability":0.7}]}
+```
+
+Concatenate entry text without adding separators to reconstruct the normalized transcript.
+`transcript.txt` is neither published nor updated.
+
 `transcriber-asr` does not download model artifacts or Execution Providers and does not build an
 Execution Provider: the fixed supplied ASR prerequisites require no download or build procedure.
-See the [ASR CLI contract](specs/002-segment-asr/contracts/cli.md) for all failure stages and
+See the [ASR CLI contract](specs/002-segment-asr/contracts/cli.md) for command behavior and the
+[structured Transcript contract](specs/003-normalized-token-json/contracts/transcript-json.md) for
 publication rules.

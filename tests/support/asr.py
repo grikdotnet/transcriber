@@ -12,6 +12,7 @@ from transcriber.infrastructure.execution_provider import (
     ExecutionProviderSession,
     RecognitionRequest,
     RecognitionResult,
+    RecognitionToken,
 )
 from transcriber.protocol.asr_cli import AsrCommand
 
@@ -47,7 +48,9 @@ def make_asr_command(task_work_directory: Path, *, model_id: str = "controlled-a
 class ControlledExecutionProvider:
     """Provider factory that records one task-owned session creation."""
 
-    def __init__(self, responses: tuple[str | Exception, ...], log: CallLog) -> None:
+    def __init__(
+        self, responses: tuple[tuple[RecognitionToken, ...] | Exception, ...], log: CallLog
+    ) -> None:
         self._responses = iter(responses)
         self._log = log
         self.session = ControlledExecutionProviderSession(self._responses, log)
@@ -62,7 +65,9 @@ class ControlledExecutionProvider:
 class ControlledExecutionProviderSession(ExecutionProviderSession):
     """Started-session double that records ordered recognition requests."""
 
-    def __init__(self, responses: Iterator[str | Exception], log: CallLog) -> None:
+    def __init__(
+        self, responses: Iterator[tuple[RecognitionToken, ...] | Exception], log: CallLog
+    ) -> None:
         super().__init__()
         self._responses = responses
         self._log = log
@@ -79,7 +84,7 @@ class ControlledExecutionProviderSession(ExecutionProviderSession):
         response = next(self._responses)
         if isinstance(response, Exception):
             raise response
-        return RecognitionResult(text=response)
+        return RecognitionResult(tokens=response)
 
     def _stop(self, *, graceful_timeout_seconds: float, force_timeout_seconds: float) -> None:
         self._log.record("provider.stop")

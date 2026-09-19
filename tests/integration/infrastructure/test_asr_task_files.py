@@ -211,9 +211,12 @@ def test_transcript_publication_uses_exact_model_directory_and_atomic_replacemen
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     task_work_directory = make_asr_task_directory(tmp_path, b"manifest")
-    destination = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.txt"
+    output_directory = task_work_directory / "transcripts-qwen3-asr-1.7b"
+    destination = output_directory / "transcript.json"
+    legacy_transcript = output_directory / "transcript.txt"
     destination.parent.mkdir()
     destination.write_bytes(b"previous\n")
+    legacy_transcript.write_bytes(b"legacy plain text\n")
     observed: dict[str, Path] = {}
     real_replace = os.replace
 
@@ -231,7 +234,9 @@ def test_transcript_publication_uses_exact_model_directory_and_atomic_replacemen
     published = publish_transcript(task_work_directory, "qwen3-asr-1.7b", b"complete\n")
 
     assert published == destination.resolve()
+    assert published.is_absolute()
     assert destination.read_bytes() == b"complete\n"
+    assert legacy_transcript.read_bytes() == b"legacy plain text\n"
     assert not observed["staged"].exists()
 
 
@@ -260,6 +265,8 @@ def test_transcript_publication_preserves_exact_empty_and_non_empty_bytes(
 
     published = publish_transcript(task_work_directory, "qwen3-asr-1.7b", content)
 
+    assert published.name == "transcript.json"
+    assert published.is_absolute()
     assert published.read_bytes() == content
 
 
@@ -270,7 +277,7 @@ def test_transcript_publication_preserves_prior_bytes_and_removes_staged_file_on
     task_work_directory = make_asr_task_directory(tmp_path, b"manifest")
     output_directory = task_work_directory / "transcripts-qwen3-asr-1.7b"
     output_directory.mkdir()
-    destination = output_directory / "transcript.txt"
+    destination = output_directory / "transcript.json"
     destination.write_bytes(b"previous\n")
     real_named_temporary_file = tempfile.NamedTemporaryFile
 

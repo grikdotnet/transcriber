@@ -11,6 +11,7 @@ requires-python = ">=3.12,<3.13"
 license = { file = "LICENSE" }
 dependencies = [
   "numpy==2.4.2",
+  "PyICU==2.16.2",
 ]
 
 [project.scripts]
@@ -46,6 +47,7 @@ strict = true
 [tool.ruff]
 target-version = "py312"
 line-length = 100
+include = ["src/**/*.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]

@@ -72,7 +72,7 @@ def publish_transcript(task_work_directory: Path, model_id: str, transcript_byte
             path=output_directory,
         )
     output_directory.mkdir(exist_ok=True)
-    destination = output_directory / "transcript.txt"
+    destination = output_directory / "transcript.json"
     AtomicFileWriter().write(destination, transcript_bytes)
     return destination
 

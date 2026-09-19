@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from numbers import Real
 from pathlib import Path
 from typing import Protocol
 
@@ -33,14 +35,35 @@ class RecognitionRequest:
 
 
 @dataclass(frozen=True, slots=True)
-class RecognitionResult:
-    """Provider text after provider-specific response adaptation."""
+class RecognitionToken:
+    """One provider-neutral, scored transcript token."""
 
+    token_id: int
     text: str
+    log_probability: float
 
     def __post_init__(self) -> None:
+        if isinstance(self.token_id, bool) or not isinstance(self.token_id, int):
+            raise ValueError("token_id must be an integer")
         if not isinstance(self.text, str):
             raise ValueError("text must be text")
+        if isinstance(self.log_probability, bool) or not isinstance(self.log_probability, Real):
+            raise ValueError("log_probability must be a real number")
+        if math.isnan(self.log_probability) or self.log_probability > 0:
+            raise ValueError("log_probability must be less than or equal to zero")
+
+
+@dataclass(frozen=True, slots=True)
+class RecognitionResult:
+    """An ordered provider-neutral recognition result for one Speech Segment."""
+
+    tokens: tuple[RecognitionToken, ...]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.tokens, tuple):
+            raise ValueError("tokens must be a tuple")
+        if not all(isinstance(token, RecognitionToken) for token in self.tokens):
+            raise ValueError("tokens must contain RecognitionToken values")
 
 
 class ExecutionProviderFailure(RuntimeError):

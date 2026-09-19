@@ -112,26 +112,6 @@ def test_prepare_success_rejects_relative_paths(
             Path("/work/other/manifest.json"),
             "manifest",
         ),
-    ],
-    ids=("canonical-audio-outside-task", "manifest-outside-task"),
-)
-def test_prepare_success_rejects_artifacts_outside_the_task_directory(
-    canonical_audio: Path,
-    manifest: Path,
-    expected_message: str,
-) -> None:
-    with pytest.raises(ValueError, match=expected_message):
-        PrepareSuccess(
-            task_work_directory=Path("/work/task"),
-            canonical_audio=canonical_audio,
-            manifest=manifest,
-            segment_count=0,
-        )
-
-
-@pytest.mark.parametrize(
-    ("canonical_audio", "manifest", "expected_message"),
-    [
         (
             Path("/work/task/audio.wav"),
             Path("/work/task/manifest.json"),
@@ -143,9 +123,14 @@ def test_prepare_success_rejects_artifacts_outside_the_task_directory(
             "manifest.json",
         ),
     ],
-    ids=("wrong-canonical-name", "wrong-manifest-name"),
+    ids=(
+        "canonical-audio-outside-task",
+        "manifest-outside-task",
+        "wrong-canonical-name",
+        "wrong-manifest-name",
+    ),
 )
-def test_prepare_success_rejects_wrong_artifact_names(
+def test_prepare_success_rejects_invalid_artifact_paths(
     canonical_audio: Path,
     manifest: Path,
     expected_message: str,

@@ -118,16 +118,16 @@ def test_asr_progress_requires_one_based_completed_count_within_total() -> None:
 
 def test_asr_success_requires_absolute_transcript_and_completed_segments() -> None:
     success = AsrSuccess(
-        transcript=Path("/work/task/transcripts-qwen3-asr-1.7b/transcript.txt"),
+        transcript=Path("/work/task/transcripts-qwen3-asr-1.7b/transcript.json"),
         recognized_segments=3,
     )
 
     assert success.recognized_segments == 3
 
     with pytest.raises(ValueError, match="absolute"):
-        AsrSuccess(transcript=Path("transcript.txt"), recognized_segments=1)
+        AsrSuccess(transcript=Path("transcript.json"), recognized_segments=1)
     with pytest.raises(ValueError, match="recognized segments"):
-        AsrSuccess(transcript=Path("/work/task/transcript.txt"), recognized_segments=0)
+        AsrSuccess(transcript=Path("/work/task/transcript.json"), recognized_segments=0)
 
 
 def test_asr_failure_has_closed_stage_and_optional_segment_diagnostic_fields() -> None:

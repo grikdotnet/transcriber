@@ -20,20 +20,6 @@ from transcriber.infrastructure.process import ManagedProcess, ManagedProcessSta
 _LOOPBACK_HOST = "127.0.0.1"
 
 
-class QwenRequestEncoder(Protocol):
-    """Encode one provider-specific recognition document."""
-
-    def __call__(self, *, audio_path: Path, recognition_context: str, language: str) -> bytes:
-        """Return one request document."""
-
-
-class QwenResponseDecoder(Protocol):
-    """Decode one provider-specific recognition document."""
-
-    def __call__(self, payload: bytes) -> str:
-        """Return recognized text."""
-
-
 class LoopbackTransport(Protocol):
     """Transport boundary restricted by the adapter to its loopback endpoint."""
 
@@ -102,8 +88,8 @@ class LlamaCppExecutionProvider:
         audio_projector_path: Path,
         process_starter: ManagedProcessStarter,
         transport: LoopbackTransport,
-        encode_request: QwenRequestEncoder,
-        decode_response: QwenResponseDecoder,
+        encode_request: Callable[[RecognitionRequest], bytes],
+        decode_response: Callable[[bytes], RecognitionResult],
         endpoint_port: Callable[[], int] = _allocate_loopback_port,
         monotonic_clock: Callable[[], float] = time.monotonic,
         sleeper: Callable[[float], None] = time.sleep,
@@ -152,8 +138,8 @@ class _LlamaCppSession(ExecutionProviderSession):
         segment_root: Path,
         process_starter: ManagedProcessStarter,
         transport: LoopbackTransport,
-        encode_request: QwenRequestEncoder,
-        decode_response: QwenResponseDecoder,
+        encode_request: Callable[[RecognitionRequest], bytes],
+        decode_response: Callable[[bytes], RecognitionResult],
         endpoint_port: Callable[[], int],
         monotonic_clock: Callable[[], float],
         sleeper: Callable[[float], None],
@@ -246,11 +232,7 @@ class _LlamaCppSession(ExecutionProviderSession):
                 message="provider recognition failed", diagnostic=self._diagnostic()
             )
         try:
-            payload = self._encode_request(
-                audio_path=request.audio_path,
-                recognition_context=request.recognition_context,
-                language=request.language,
-            )
+            payload = self._encode_request(request)
         except ValueError as error:
             raise ExecutionProviderFailure(message=str(error)) from error
         deadline = self._monotonic_clock() + timeout_seconds
@@ -268,7 +250,7 @@ class _LlamaCppSession(ExecutionProviderSession):
         if self._monotonic_clock() >= deadline:
             raise ExecutionProviderFailure(message="recognition request timed out")
         try:
-            return RecognitionResult(text=self._decode_response(response))
+            return self._decode_response(response)
         except (TypeError, ValueError) as error:
             raise ExecutionProviderFailure(message="provider response failed") from error
 

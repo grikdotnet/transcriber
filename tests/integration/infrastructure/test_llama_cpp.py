@@ -14,10 +14,11 @@ from transcriber.infrastructure import process as process_module
 from transcriber.infrastructure.execution_provider import (
     ExecutionProviderFailure,
     RecognitionRequest,
+    RecognitionResult,
+    RecognitionToken,
 )
 from transcriber.infrastructure.llama_cpp import HttpLoopbackTransport, LlamaCppExecutionProvider
 from transcriber.infrastructure.process import SubprocessManagedProcessStarter
-from transcriber.protocol.qwen_asr import encode_qwen_request
 
 EXECUTABLE = Path("/repository/vendor/llama-server")
 MODEL = Path("/repository/models/qwen3-asr-1.7b/Qwen3-ASR-1.7B-Q8_0.gguf")
@@ -114,8 +115,8 @@ def _provider(
         audio_projector_path=PROJECTOR,
         process_starter=starter or ManagedProcessStarterDouble(ManagedProcessDouble()),
         transport=transport,
-        encode_request=lambda **_kwargs: b"request",
-        decode_response=lambda _payload: "text",
+        encode_request=lambda _request: b"request",
+        decode_response=lambda _payload: RecognitionResult(tokens=()),
         endpoint_port=ports or (lambda: 43127),
         monotonic_clock=clock,
         sleeper=clock.sleep,
@@ -188,17 +189,63 @@ def test_provider_request_error_retains_separate_diagnostic() -> None:
     assert raised.value.diagnostic == "provider HTTP failure"
 
 
-def test_explicit_portuguese_regional_tag_reaches_provider_as_canonical_language() -> None:
+@pytest.mark.parametrize("decoder_error", [TypeError, ValueError])
+def test_malformed_decoder_failure_has_bounded_provider_response_stage_and_reaps_session(
+    decoder_error: type[Exception],
+) -> None:
+    clock = ControlledClock()
+    process = ManagedProcessDouble()
+    transport = LoopbackTransportDouble()
+
+    def reject_malformed_response(_payload: bytes) -> RecognitionResult:
+        raise decoder_error("untrusted decoder detail " * 1_000)
+
+    provider = LlamaCppExecutionProvider(
+        executable=EXECUTABLE,
+        model_path=MODEL,
+        audio_projector_path=PROJECTOR,
+        process_starter=ManagedProcessStarterDouble(process),
+        transport=transport,
+        encode_request=lambda _request: b"request",
+        decode_response=reject_malformed_response,
+        endpoint_port=lambda: 43127,
+        monotonic_clock=clock,
+        sleeper=clock.sleep,
+    )
+    session = provider.create(segment_root=SEGMENT_ROOT)
+    request = RecognitionRequest(0, SEGMENT_ROOT / "segment-0000.wav", "", "auto")
+
+    session.start()
+    with pytest.raises(ExecutionProviderFailure) as raised:
+        session.recognize(request)
+    session.stop()
+
+    assert raised.value.message == "provider response failed"
+    assert raised.value.diagnostic is None
+    assert clock.now == 0.0
+    assert transport.recognition_calls == [("127.0.0.1", 43127, b"request", 180.0)]
+    assert process.terminate_calls == 1
+    assert process.wait_timeouts == [60.0]
+
+
+def test_request_encoder_receives_recognition_request_and_decoder_returns_ordered_tokens() -> None:
     clock = ControlledClock()
     transport = LoopbackTransportDouble()
+    encoded_requests: list[RecognitionRequest] = []
+    decoded_responses: list[bytes] = []
+    decoded_tokens = (
+        RecognitionToken(token_id=17, text="Olá ", log_probability=-0.1),
+        RecognitionToken(token_id=29, text="世界", log_probability=-0.2),
+    )
     provider = LlamaCppExecutionProvider(
         executable=EXECUTABLE,
         model_path=MODEL,
         audio_projector_path=PROJECTOR,
         process_starter=ManagedProcessStarterDouble(ManagedProcessDouble()),
         transport=transport,
-        encode_request=encode_qwen_request,
-        decode_response=lambda _payload: "recognized text",
+        encode_request=lambda request: encoded_requests.append(request) or b"encoded request",
+        decode_response=lambda response: decoded_responses.append(response)
+        or RecognitionResult(tokens=decoded_tokens),
         endpoint_port=lambda: 43127,
         monotonic_clock=clock,
         sleeper=clock.sleep,
@@ -211,21 +258,27 @@ def test_explicit_portuguese_regional_tag_reaches_provider_as_canonical_language
     session.start()
     result = session.recognize(request)
 
-    assert b'"content":"language Portuguese<asr_text>"' in transport.recognition_calls[0][2]
-    assert result.text == "recognized text"
+    assert encoded_requests == [request]
+    assert transport.recognition_calls == [("127.0.0.1", 43127, b"encoded request", 180.0)]
+    assert decoded_responses == [b"provider response"]
+    assert result.tokens == decoded_tokens
 
 
-def test_unsupported_qwen_language_sends_no_recognition_http_request() -> None:
+def test_request_encoder_failure_sends_no_recognition_http_request() -> None:
     clock = ControlledClock()
     transport = LoopbackTransportDouble()
+
+    def reject_request(_request: RecognitionRequest) -> bytes:
+        raise ValueError("Qwen ASR does not support language tag: cy")
+
     provider = LlamaCppExecutionProvider(
         executable=EXECUTABLE,
         model_path=MODEL,
         audio_projector_path=PROJECTOR,
         process_starter=ManagedProcessStarterDouble(ManagedProcessDouble()),
         transport=transport,
-        encode_request=encode_qwen_request,
-        decode_response=lambda _payload: "recognized text",
+        encode_request=reject_request,
+        decode_response=lambda _payload: RecognitionResult(tokens=()),
         endpoint_port=lambda: 43127,
         monotonic_clock=clock,
         sleeper=clock.sleep,
@@ -427,19 +480,19 @@ def test_session_starts_one_loopback_server_recognizes_sequentially_and_reaps_no
     process = ManagedProcessDouble()
     starter = ManagedProcessStarterDouble(process)
     transport = LoopbackTransportDouble()
-    encoded_requests: list[tuple[Path, str, str]] = []
+    encoded_requests: list[RecognitionRequest] = []
     decoded_responses: list[bytes] = []
+    decoded_result = RecognitionResult(
+        tokens=(RecognitionToken(token_id=1, text="recognized text", log_probability=-0.1),)
+    )
     provider = LlamaCppExecutionProvider(
         executable=EXECUTABLE,
         model_path=MODEL,
         audio_projector_path=PROJECTOR,
         process_starter=starter,
         transport=transport,
-        encode_request=lambda *, audio_path, recognition_context, language: (
-            encoded_requests.append((audio_path, recognition_context, language))
-            or b"encoded request"
-        ),
-        decode_response=lambda payload: decoded_responses.append(payload) or "recognized text",
+        encode_request=lambda request: encoded_requests.append(request) or b"encoded request",
+        decode_response=lambda payload: decoded_responses.append(payload) or decoded_result,
         endpoint_port=lambda: 43127,
     )
     session = provider.create(segment_root=SEGMENT_ROOT)
@@ -484,17 +537,14 @@ def test_session_starts_one_loopback_server_recognizes_sequentially_and_reaps_no
     host, port, readiness_timeout = transport.health_calls[0]
     assert (host, port) == ("127.0.0.1", 43127)
     assert 0.0 < readiness_timeout <= 60.0
-    assert encoded_requests == [
-        (first.audio_path, "", "auto"),
-        (second.audio_path, "", "auto"),
-    ]
+    assert encoded_requests == [first, second]
     assert transport.recognition_calls == [
         ("127.0.0.1", 43127, b"encoded request", 180.0),
         ("127.0.0.1", 43127, b"encoded request", 180.0),
     ]
     assert decoded_responses == [b"provider response", b"provider response"]
-    assert first_result.text == "recognized text"
-    assert second_result.text == "recognized text"
+    assert first_result == decoded_result
+    assert second_result == decoded_result
     assert process.terminate_calls == 1
     assert process.kill_calls == 0
     assert process.wait_timeouts == [60.0]

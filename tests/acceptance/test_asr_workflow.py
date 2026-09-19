@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import socket
 from collections.abc import Callable, Sequence
 from pathlib import Path
@@ -35,6 +36,7 @@ from transcriber.infrastructure.execution_provider import (
     ExecutionProviderFailure,
     RecognitionRequest,
     RecognitionResult,
+    RecognitionToken,
 )
 from transcriber.infrastructure.llama_cpp import LlamaCppExecutionProvider
 from transcriber.infrastructure.wave_files import WaveFileReader
@@ -45,8 +47,31 @@ from transcriber.service.recognize_segments import RecognizeSegments
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 
 
+ControlledResponse = str | tuple[RecognitionToken, ...] | Exception
+
+
+def _tokenize_responses(
+    responses: tuple[ControlledResponse, ...],
+) -> tuple[tuple[RecognitionToken, ...] | Exception, ...]:
+    """Map legacy text fixtures to scored provider-neutral Recognition Tokens."""
+    tokenized_responses: list[tuple[RecognitionToken, ...] | Exception] = []
+    for index, response in enumerate(responses):
+        if isinstance(response, str):
+            tokens = () if not response else (RecognitionToken(index, response, 0.0),)
+            tokenized_responses.append(tokens)
+        else:
+            tokenized_responses.append(response)
+    return tuple(tokenized_responses)
+
+
+def _controlled_provider(
+    responses: tuple[ControlledResponse, ...], log: CallLog
+) -> ControlledExecutionProvider:
+    return ControlledExecutionProvider(_tokenize_responses(responses), log)
+
+
 def _controlled_application(
-    responses: tuple[str, ...],
+    responses: tuple[ControlledResponse, ...],
     log: CallLog,
     *,
     context_supported: bool = True,
@@ -54,7 +79,7 @@ def _controlled_application(
     provider: ExecutionProvider | None = None,
     missing_prerequisites: Callable[[], Sequence[str]] = lambda: (),
 ) -> application.Application:
-    controlled_provider = provider or ControlledExecutionProvider(responses, log)
+    controlled_provider = provider or _controlled_provider(responses, log)
     return application.Application(
         service=object(),  # type: ignore[arg-type]
         asr_service=RecognizeSegments(
@@ -86,6 +111,49 @@ def _write_controlled_task(tmp_path: Path, segment_count: int) -> Path:
     return task_work_directory
 
 
+def _application_for_qwen_response(response: bytes) -> application.Application:
+    """Run controlled Qwen bytes through llama.cpp and Transcript publication."""
+
+    class ControlledLoopbackTransport:
+        def health(self, *, host: str, port: int, timeout_seconds: float) -> bool:
+            assert (host, port, timeout_seconds) == ("127.0.0.1", 43127, 60.0)
+            return True
+
+        def recognize(
+            self, *, host: str, port: int, payload: bytes, timeout_seconds: float
+        ) -> bytes:
+            assert (host, port, timeout_seconds) == ("127.0.0.1", 43127, 180.0)
+            assert json.loads(payload)["logprobs"] is True
+            return response
+
+    def decode_response(payload: bytes) -> RecognitionResult:
+        qwen_result = decode_qwen_response(payload)
+        return RecognitionResult(
+            tokens=tuple(
+                RecognitionToken(token.token_id, token.text, token.log_probability)
+                for token in qwen_result.tokens
+            )
+        )
+
+    provider = LlamaCppExecutionProvider(
+        executable=REPOSITORY_ROOT / "vendor" / "llama-server",
+        model_path=REPOSITORY_ROOT / "models" / "qwen3-asr-1.7b" / "model.gguf",
+        audio_projector_path=REPOSITORY_ROOT / "models" / "qwen3-asr-1.7b" / "projector.gguf",
+        process_starter=ManagedProcessStarterDouble(ManagedProcessDouble()),
+        transport=ControlledLoopbackTransport(),
+        encode_request=lambda request: encode_qwen_request(
+            audio_path=request.audio_path,
+            recognition_context=request.recognition_context,
+            language=request.language,
+        ),
+        decode_response=decode_response,
+        endpoint_port=lambda: 43127,
+        monotonic_clock=lambda: 0.0,
+        sleeper=lambda _seconds: None,
+    )
+    return _controlled_application((), CallLog(), provider=provider)
+
+
 @pytest.mark.parametrize("segment_count", [1, 100])
 def test_asr_command_recognizes_each_speech_segment_once_in_manifest_order(
     segment_count: int,
@@ -95,14 +163,33 @@ def test_asr_command_recognizes_each_speech_segment_once_in_manifest_order(
 ) -> None:
     task_work_directory = _write_controlled_task(tmp_path, segment_count)
     log = CallLog()
-    responses = tuple(f"word-{index}" for index in range(segment_count))
+    responses = tuple(
+        (
+            RecognitionToken(index * 2, "e", math.log(0.9)),
+            RecognitionToken(index * 2 + 1, "\u0301.", math.log(0.7)),
+        )
+        for index in range(segment_count)
+    )
     built = _controlled_application(responses, log)
     monkeypatch.setattr(asr_cli, "build_application", lambda **_: built)
 
     assert asr_cli.main([str(task_work_directory), "--model", "qwen3-asr-1.7b"]) == 0
 
-    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.txt"
-    assert transcript.read_bytes() == (" ".join(responses) + "\n").encode()
+    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.json"
+    expected_document = {
+        "text": [
+            span
+            for _ in range(segment_count)
+            for span in (
+                {"text": "é", "probability": 0.7},
+                {"text": ".", "probability": 0.7},
+            )
+        ]
+    }
+    assert transcript.read_bytes() == (
+        json.dumps(expected_document, ensure_ascii=False, separators=(",", ":")) + "\n"
+    ).encode()
+    assert json.loads(transcript.read_bytes()) == expected_document
     assert log.events == (
         "provider.create",
         "provider.start",
@@ -126,13 +213,16 @@ def test_asr_command_counts_an_empty_middle_result_without_a_transcript_separato
 ) -> None:
     task_work_directory = _write_controlled_task(tmp_path, 3)
     log = CallLog()
-    built = _controlled_application(("first", "", "last"), log)
+    built = _controlled_application((" first", "", "last "), log)
     monkeypatch.setattr(asr_cli, "build_application", lambda **_: built)
 
     assert asr_cli.main([str(task_work_directory), "--model", "qwen3-asr-1.7b"]) == 0
 
-    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.txt"
-    assert transcript.read_bytes() == b"first last\n"
+    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.json"
+    document = json.loads(transcript.read_bytes())
+    assert "".join(span["text"] for span in document["text"]) == " firstlast "
+    assert transcript.read_bytes().endswith(b"\n")
+    assert transcript.read_bytes() != b'{"text":[]}\n'
     assert log.events == (
         "provider.create",
         "provider.start",
@@ -150,14 +240,83 @@ def test_asr_command_counts_an_empty_middle_result_without_a_transcript_separato
     )
 
 
+def test_asr_command_publishes_the_exact_empty_structured_transcript(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    task_work_directory = _write_controlled_task(tmp_path, 1)
+    log = CallLog()
+    built = _controlled_application(((),), log)
+    monkeypatch.setattr(asr_cli, "build_application", lambda **_: built)
+
+    assert asr_cli.main([str(task_work_directory), "--model", "qwen3-asr-1.7b"]) == 0
+
+    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.json"
+    assert transcript.read_bytes() == b'{"text":[]}\n'
+
+
+@pytest.mark.parametrize(
+    ("provider_response", "expected_bytes"),
+    (
+        (
+            {
+                "choices": [
+                    {
+                        "message": {"role": "assistant", "content": "ignored"},
+                        "finish_reason": "stop",
+                        "logprobs": {
+                            "content": [
+                                {
+                                    "id": 7,
+                                    "token": "language English<asr_text>hé",
+                                    "logprob": math.log(0.8),
+                                }
+                            ]
+                        },
+                    }
+                ]
+            },
+            '{"text":[{"text":"h","probability":0.8},{"text":"é","probability":0.8}]}\n'.encode(),
+        ),
+        (
+            {
+                "choices": [
+                    {
+                        "message": {"role": "assistant", "content": "unexposed text"},
+                        "finish_reason": "stop",
+                    }
+                ]
+            },
+            b'{"text":[]}\n',
+        ),
+    ),
+)
+def test_asr_command_accepts_qwen_prefix_and_absent_token_list_as_success(
+    provider_response: dict[str, object],
+    expected_bytes: bytes,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Qwen metadata is removed, while omitted token data produces an empty success."""
+
+    task_work_directory = _write_controlled_task(tmp_path, 1)
+    built = _application_for_qwen_response(json.dumps(provider_response).encode())
+    monkeypatch.setattr(asr_cli, "build_application", lambda **_: built)
+
+    assert asr_cli.main([str(task_work_directory), "--model", "qwen3-asr-1.7b"]) == 0
+    assert (
+        task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.json"
+    ).read_bytes() == expected_bytes
+
+
 def test_asr_command_rerun_replaces_the_prior_complete_transcript(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     task_work_directory = _write_controlled_task(tmp_path, 1)
-    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.txt"
+    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.json"
     transcript.parent.mkdir()
-    transcript.write_bytes(b"previous complete transcript\n")
+    transcript.write_bytes(b'{"text":[{"text":"previous","probability":1}]}\n')
     log = CallLog()
     applications = iter(
         (
@@ -168,42 +327,14 @@ def test_asr_command_rerun_replaces_the_prior_complete_transcript(
     monkeypatch.setattr(asr_cli, "build_application", lambda **_: next(applications))
 
     assert asr_cli.main([str(task_work_directory), "--model", "qwen3-asr-1.7b"]) == 0
-    assert transcript.read_bytes() == b"replacement one\n"
+    assert "".join(span["text"] for span in json.loads(transcript.read_bytes())["text"]) == (
+        "replacement one"
+    )
     assert asr_cli.main([str(task_work_directory), "--model", "qwen3-asr-1.7b"]) == 0
 
-    assert transcript.read_bytes() == b"replacement two\n"
-
-
-def test_builtin_qwen_path_uses_the_fixed_llama_cpp_registration_without_path_lookup(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    captured: dict[str, object] = {}
-
-    class CapturingLlamaCppExecutionProvider:
-        def __init__(self, **kwargs: object) -> None:
-            captured.update(kwargs)
-
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("PATH", "")
-    monkeypatch.setattr(
-        application,
-        "LlamaCppExecutionProvider",
-        CapturingLlamaCppExecutionProvider,
+    assert "".join(span["text"] for span in json.loads(transcript.read_bytes())["text"]) == (
+        "replacement two"
     )
-
-    built = application.build_application()
-
-    assert built.asr_model_id == "qwen3-asr-1.7b"
-    assert captured["executable"] == REPOSITORY_ROOT / "vendor" / "llama-server"
-    assert captured["model_path"] == (
-        REPOSITORY_ROOT / "models" / "qwen3-asr-1.7b" / "Qwen3-ASR-1.7B-Q8_0.gguf"
-    )
-    assert captured["audio_projector_path"] == (
-        REPOSITORY_ROOT / "models" / "qwen3-asr-1.7b" / "mmproj-Qwen3-ASR-1.7B-Q8_0.gguf"
-    )
-    assert captured["encode_request"] is encode_qwen_request
-    assert captured["decode_response"] is decode_qwen_response
 
 
 def test_asr_command_supplies_exact_continuity_context_to_a_context_capable_model(
@@ -214,7 +345,7 @@ def test_asr_command_supplies_exact_continuity_context_to_a_context_capable_mode
     log = CallLog()
     first_result = "alpha"
     second_result = "β" * 2049 + " boundary"
-    provider = ControlledExecutionProvider((first_result, second_result, "third"), log)
+    provider = _controlled_provider((first_result, second_result, "third"), log)
     built = _controlled_application((), log, provider=provider)
     monkeypatch.setattr(asr_cli, "build_application", lambda **_: built)
 
@@ -233,7 +364,7 @@ def test_asr_command_supplies_empty_context_to_a_context_disabled_model(
 ) -> None:
     task_work_directory = _write_controlled_task(tmp_path, 3)
     log = CallLog()
-    provider = ControlledExecutionProvider(("first", "second", "third"), log)
+    provider = _controlled_provider(("first", "second", "third"), log)
     built = _controlled_application(
         (), log, context_supported=False, provider=provider
     )
@@ -256,7 +387,7 @@ def test_asr_command_preserves_each_valid_boundary_language_tag(
 ) -> None:
     task_work_directory = _write_controlled_task(tmp_path, 1)
     log = CallLog()
-    provider = ControlledExecutionProvider(("recognized",), log)
+    provider = _controlled_provider(("recognized",), log)
     built = _controlled_application((), log, provider=provider)
     monkeypatch.setattr(asr_cli, "build_application", lambda **_: built)
 
@@ -315,8 +446,17 @@ def test_asr_command_reports_unsupported_qwen_language_through_real_failure_flow
         ),
         process_starter=ManagedProcessStarterDouble(process),
         transport=transport,
-        encode_request=encode_qwen_request,
-        decode_response=decode_qwen_response,
+        encode_request=lambda request: encode_qwen_request(
+            audio_path=request.audio_path,
+            recognition_context=request.recognition_context,
+            language=request.language,
+        ),
+        decode_response=lambda payload: RecognitionResult(
+            tokens=tuple(
+                RecognitionToken(token.token_id, token.text, token.log_probability)
+                for token in decode_qwen_response(payload).tokens
+            )
+        ),
         endpoint_port=lambda: 43127,
         monotonic_clock=lambda: 0.0,
         sleeper=lambda _seconds: None,
@@ -387,6 +527,91 @@ def test_asr_command_rejects_automatic_language_for_a_required_model_before_prov
     assert log.events == ()
 
 
+def _qwen_response(
+    *,
+    probability_content: object = (),
+    finish_reason: object = "stop",
+    include_finish_reason: bool = True,
+) -> bytes:
+    """Build one controlled completed Qwen response with mutable result fields."""
+    choice: dict[str, object] = {
+        "message": {"role": "assistant", "content": "ignored"},
+        "logprobs": {"content": probability_content},
+    }
+    if include_finish_reason:
+        choice["finish_reason"] = finish_reason
+    return json.dumps(
+        {
+            "choices": [choice]
+        }
+    ).encode()
+
+
+@pytest.mark.parametrize(
+    "response",
+    (
+        _qwen_response(
+            probability_content=[{"id": 1, "token": "<asr_text>", "logprob": -0.1}]
+        ),
+        _qwen_response(probability_content={}),
+    ),
+    ids=("malformed-initial-marker", "malformed-present-token-list"),
+)
+def test_asr_command_rejects_invalid_qwen_responses_without_replacing_a_transcript(
+    response: bytes,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Malformed provider data crosses the real adapter boundary before publication."""
+    task_work_directory = _write_controlled_task(tmp_path, 1)
+    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.json"
+    transcript.parent.mkdir()
+    previous_bytes = b'{"text":[{"text":"previous","probability":1}]}\n'
+    transcript.write_bytes(previous_bytes)
+    built = _application_for_qwen_response(response)
+    monkeypatch.setattr(asr_cli, "build_application", lambda **_: built)
+
+    assert asr_cli.main([str(task_work_directory), "--model", "qwen3-asr-1.7b"]) == 1
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err.startswith('ERROR [provider-response] model="qwen3-asr-1.7b" segment=0:')
+    assert transcript.read_bytes() == previous_bytes
+    assert list(transcript.parent.glob(".transcript.json.*.tmp")) == []
+
+
+def test_asr_command_preserves_a_transcript_after_normalization_overflow(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    task_work_directory = _write_controlled_task(tmp_path, 1)
+    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.json"
+    transcript.parent.mkdir()
+    previous_bytes = b'{"text":[{"text":"previous","probability":1}]}\n'
+    transcript.write_bytes(previous_bytes)
+    log = CallLog()
+    overflowing_tokens = (RecognitionToken(1, "\u0301" * 8193, -0.1),)
+    provider = _controlled_provider((overflowing_tokens,), log)
+    built = _controlled_application((), log, provider=provider)
+    monkeypatch.setattr(asr_cli, "build_application", lambda **_: built)
+
+    assert asr_cli.main([str(task_work_directory), "--model", "qwen3-asr-1.7b"]) == 1
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err.startswith("ERROR [execution-provider]")
+    assert transcript.read_bytes() == previous_bytes
+    assert list(transcript.parent.glob(".transcript.json.*.tmp")) == []
+    assert log.events == (
+        "provider.create",
+        "provider.start",
+        "provider.recognize.0",
+        "provider.stop",
+    )
+
+
 @pytest.mark.parametrize(
     ("boundary", "expected_stage", "completed_segments", "provider_started"),
     (
@@ -412,12 +637,12 @@ def test_asr_command_failure_matrix_preserves_complete_transcript_and_cleans_up(
 ) -> None:
     """Each public failure boundary retains prior output and emits completed progress only."""
     task_work_directory = _write_controlled_task(tmp_path, 2)
-    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.txt"
+    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.json"
     transcript.parent.mkdir()
     previous_bytes = b"previous complete transcript\n"
     transcript.write_bytes(previous_bytes)
     log = CallLog()
-    responses: tuple[str | Exception, ...] = ("first", "second")
+    responses: tuple[ControlledResponse, ...] = ("first", "second")
     if boundary == "provider-response":
         responses = (
             "first",
@@ -427,7 +652,7 @@ def test_asr_command_failure_matrix_preserves_complete_transcript_and_cleans_up(
         )
     elif boundary == "recognition-deadline":
         responses = (ExecutionProviderFailure(message="recognition request timed out"),)
-    provider = ControlledExecutionProvider(responses, log)
+    provider = _controlled_provider(responses, log)
     built = _controlled_application((), log, provider=provider)
     monkeypatch.setattr(asr_cli, "build_application", lambda **_: built)
 
@@ -478,7 +703,7 @@ def test_asr_command_failure_matrix_preserves_complete_transcript_and_cleans_up(
     assert captured.err.startswith(f"ERROR [{expected_stage}]")
     assert "transcript=" not in captured.out
     assert transcript.read_bytes() == previous_bytes
-    assert list(transcript.parent.glob(".transcript.txt.*.tmp")) == []
+    assert list(transcript.parent.glob(".transcript.json.*.tmp")) == []
     if provider_started:
         assert log.events.count("provider.start") == 1
         assert log.events.count("provider.stop") == 1
@@ -493,7 +718,7 @@ def test_asr_command_rejects_zero_segments_without_provider_or_transcript_mutati
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     task_work_directory = _write_controlled_task(tmp_path, 0)
-    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.txt"
+    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.json"
     transcript.parent.mkdir()
     previous_bytes = b"previous complete transcript\n"
     transcript.write_bytes(previous_bytes)
@@ -507,7 +732,7 @@ def test_asr_command_rejects_zero_segments_without_provider_or_transcript_mutati
     assert captured.out == ""
     assert captured.err.startswith("ERROR [segment-manifest]")
     assert transcript.read_bytes() == previous_bytes
-    assert list(transcript.parent.glob(".transcript.txt.*.tmp")) == []
+    assert list(transcript.parent.glob(".transcript.json.*.tmp")) == []
     assert log.events == ()
 
 
@@ -518,7 +743,7 @@ def test_asr_command_rejects_an_unknown_model_before_task_or_transcript_access(
 ) -> None:
     """Unknown model resolution is an availability boundary, not task processing."""
     task_work_directory = _write_controlled_task(tmp_path, 1)
-    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.txt"
+    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.json"
     transcript.parent.mkdir()
     previous_bytes = b"previous complete transcript\n"
     transcript.write_bytes(previous_bytes)
@@ -543,12 +768,12 @@ def test_asr_command_reports_all_missing_prerequisites_before_provider_or_transc
 ) -> None:
     """Availability reports fixed provider and artifact paths before service startup."""
     task_work_directory = _write_controlled_task(tmp_path, 1)
-    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.txt"
+    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.json"
     transcript.parent.mkdir()
     previous_bytes = b"previous complete transcript\n"
     transcript.write_bytes(previous_bytes)
     log = CallLog()
-    provider = ControlledExecutionProvider(("unreachable",), log)
+    provider = _controlled_provider(("unreachable",), log)
     built = _controlled_application(
         (),
         log,
@@ -616,7 +841,7 @@ def test_second_valid_registration_uses_the_unchanged_transcript_assembly_servic
     """A compatible registration changes selection only, never Transcript assembly."""
     task_work_directory = _write_controlled_task(tmp_path, 2)
     log = CallLog()
-    provider = ControlledExecutionProvider(("first", "second"), log)
+    provider = _controlled_provider(("first", "second"), log)
     baseline = _controlled_application((), log, provider=provider)
     built = application.Application(
         service=baseline.service,
@@ -635,8 +860,10 @@ def test_second_valid_registration_uses_the_unchanged_transcript_assembly_servic
 
     assert asr_cli.main([str(task_work_directory), "--model", "second-asr"]) == 0
 
-    transcript = task_work_directory / "transcripts-second-asr" / "transcript.txt"
-    assert transcript.read_bytes() == b"first second\n"
+    transcript = task_work_directory / "transcripts-second-asr" / "transcript.json"
+    assert "".join(span["text"] for span in json.loads(transcript.read_bytes())["text"]) == (
+        "firstsecond"
+    )
     assert capsys.readouterr() == (
         "recognized_segments=1 total_segments=2\n"
         "recognized_segments=2 total_segments=2\n"
@@ -658,12 +885,12 @@ def test_asr_command_stops_provider_after_non_timeout_startup_failure(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     task_work_directory = _write_controlled_task(tmp_path, 1)
-    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.txt"
+    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.json"
     transcript.parent.mkdir()
     previous_bytes = b"previous complete transcript\n"
     transcript.write_bytes(previous_bytes)
     log = CallLog()
-    provider = ControlledExecutionProvider(("unreachable",), log)
+    provider = _controlled_provider(("unreachable",), log)
 
     def fail_start(*, readiness_timeout_seconds: float) -> None:
         assert readiness_timeout_seconds == 60.0
@@ -685,7 +912,7 @@ def test_asr_command_stops_provider_after_non_timeout_startup_failure(
         'provider startup failed: provider said "controlled bind failure"\n'
     )
     assert transcript.read_bytes() == previous_bytes
-    assert list(transcript.parent.glob(".transcript.txt.*.tmp")) == []
+    assert list(transcript.parent.glob(".transcript.json.*.tmp")) == []
     assert log.events == ("provider.create", "provider.start", "provider.stop")
 
 
@@ -695,12 +922,12 @@ def test_asr_command_reports_non_timeout_recognition_failure_with_index_and_diag
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     task_work_directory = _write_controlled_task(tmp_path, 2)
-    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.txt"
+    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.json"
     transcript.parent.mkdir()
     previous_bytes = b"previous complete transcript\n"
     transcript.write_bytes(previous_bytes)
     log = CallLog()
-    provider = ControlledExecutionProvider(
+    provider = _controlled_provider(
         (
             "first",
             ExecutionProviderFailure(
@@ -721,7 +948,7 @@ def test_asr_command_reports_non_timeout_recognition_failure_with_index_and_diag
         'provider request failed: provider said "controlled \\"request\\" failure"\n'
     )
     assert transcript.read_bytes() == previous_bytes
-    assert list(transcript.parent.glob(".transcript.txt.*.tmp")) == []
+    assert list(transcript.parent.glob(".transcript.json.*.tmp")) == []
     assert log.events == (
         "provider.create",
         "provider.start",
@@ -737,12 +964,12 @@ def test_asr_command_cleanup_failure_retains_prior_transcript_after_completed_re
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     task_work_directory = _write_controlled_task(tmp_path, 1)
-    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.txt"
+    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.json"
     transcript.parent.mkdir()
     previous_bytes = b"previous complete transcript\n"
     transcript.write_bytes(previous_bytes)
     log = CallLog()
-    provider = ControlledExecutionProvider(("replacement",), log)
+    provider = _controlled_provider(("replacement",), log)
 
     def fail_stop(*_: object, **__: object) -> object:
         log.record("provider.stop")
@@ -763,7 +990,7 @@ def test_asr_command_cleanup_failure_retains_prior_transcript_after_completed_re
         'provider cleanup failed: provider said "controlled reap failure"\n'
     )
     assert transcript.read_bytes() == previous_bytes
-    assert list(transcript.parent.glob(".transcript.txt.*.tmp")) == []
+    assert list(transcript.parent.glob(".transcript.json.*.tmp")) == []
 
 
 @pytest.mark.real_asr
@@ -787,7 +1014,8 @@ def test_real_asr_workflow(
     captured_provider_arguments: dict[str, object] = {}
     request_payloads: list[bytes] = []
     response_payloads: list[bytes] = []
-    decoded_responses: list[str] = []
+    decoded_responses: list[RecognitionResult] = []
+    exposed_token_records: list[dict[str, object]] = []
     process_events: list[str] = []
     started_argv: list[tuple[str, ...]] = []
     provider_class = application.LlamaCppExecutionProvider
@@ -807,11 +1035,32 @@ def test_real_asr_workflow(
         request_payloads.append(payload)
         return payload
 
-    def capture_response(payload: bytes) -> str:
+    def capture_response(payload: bytes) -> RecognitionResult:
         response_payloads.append(payload)
-        text = decode_qwen_response(payload)
-        decoded_responses.append(text)
-        return text
+        response = json.loads(payload)
+        assert isinstance(response, dict)
+        choices = response["choices"]
+        assert isinstance(choices, list)
+        assert len(choices) == 1
+        choice = choices[0]
+        assert isinstance(choice, dict)
+        assert choice["finish_reason"] == "stop"
+        logprobs = choice.get("logprobs")
+        assert isinstance(logprobs, dict)
+        token_records = logprobs.get("content")
+        assert isinstance(token_records, list)
+        assert token_records
+        assert all(isinstance(record, dict) for record in token_records)
+        exposed_token_records.extend(token_records)
+        qwen_result = decode_qwen_response(payload)
+        result = RecognitionResult(
+            tokens=tuple(
+                RecognitionToken(token.token_id, token.text, token.log_probability)
+                for token in qwen_result.tokens
+            )
+        )
+        decoded_responses.append(result)
+        return result
 
     class RecordingManagedProcess:
         def __init__(self, delegate: object) -> None:
@@ -853,12 +1102,28 @@ def test_real_asr_workflow(
 
     assert asr_cli.main([str(task_work_directory), "--model", "qwen3-asr-1.7b"]) == 0
 
-    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.txt"
+    transcript = task_work_directory / "transcripts-qwen3-asr-1.7b" / "transcript.json"
     assert captured_provider_arguments["executable"] == real_asr_paths.provider
     assert captured_provider_arguments["model_path"] == real_asr_paths.model
     assert captured_provider_arguments["audio_projector_path"] == real_asr_paths.audio_projector
     assert len(request_payloads) == 1
     assert len(response_payloads) == 1
+    assert all(
+        isinstance(record["id"], int) and not isinstance(record["id"], bool)
+        for record in exposed_token_records
+    )
+    assert all(
+        isinstance(record["token"], str)
+        and record["token"].encode("utf-8").decode("utf-8") == record["token"]
+        for record in exposed_token_records
+    )
+    assert all(
+        isinstance(record["logprob"], (int, float))
+        and not isinstance(record["logprob"], bool)
+        and not math.isnan(float(record["logprob"]))
+        and float(record["logprob"]) <= 0
+        for record in exposed_token_records
+    )
     request = json.loads(request_payloads[0])
     assert request["messages"] == [
         {"role": "system", "content": ""},
@@ -876,7 +1141,9 @@ def test_real_asr_workflow(
     assert request["temperature"] == 0
     assert request["cache_prompt"] is False
     expected_transcript = Transcript()
-    expected_transcript.append(decoded_responses[0])
+    for token in decoded_responses[0].tokens:
+        expected_transcript.append_token(token.text, token.log_probability)
+    expected_transcript.finish_segment()
     assert transcript.is_file()
     assert transcript.read_bytes() == expected_transcript.encode()
     assert started_argv[0][0] == str(real_asr_paths.provider)

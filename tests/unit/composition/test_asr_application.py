@@ -6,11 +6,16 @@ from pathlib import Path
 import pytest
 
 from transcriber.composition import application
+from transcriber.infrastructure.execution_provider import (
+    RecognitionRequest,
+    RecognitionResult,
+    RecognitionToken,
+)
 from transcriber.infrastructure.llama_cpp import HttpLoopbackTransport
 from transcriber.infrastructure.process import SubprocessManagedProcessStarter
 from transcriber.protocol.asr_cli import AsrCommand, AsrFailure, AsrSuccess
 from transcriber.protocol.asr_model_manifest import AsrModelCapabilities
-from transcriber.protocol.qwen_asr import decode_qwen_response, encode_qwen_request
+from transcriber.protocol.qwen_asr import QwenRecognitionResult, QwenRecognitionToken
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 
@@ -53,7 +58,7 @@ def test_application_assembles_the_packaged_qwen_registration_from_foreign_direc
     assert {
         key: value
         for key, value in captured.items()
-        if key not in {"process_starter", "transport"}
+        if key not in {"process_starter", "transport", "encode_request", "decode_response"}
     } == {
         "executable": REPOSITORY_ROOT / "vendor" / "llama-server",
         "model_path": (
@@ -65,11 +70,89 @@ def test_application_assembles_the_packaged_qwen_registration_from_foreign_direc
             / "qwen3-asr-1.7b"
             / "mmproj-Qwen3-ASR-1.7B-Q8_0.gguf"
         ),
-        "encode_request": encode_qwen_request,
-        "decode_response": decode_qwen_response,
     }
+    assert callable(captured["encode_request"])
+    assert callable(captured["decode_response"])
     assert isinstance(captured["process_starter"], SubprocessManagedProcessStarter)
     assert isinstance(captured["transport"], HttpLoopbackTransport)
+
+
+def test_qwen_request_wrapper_passes_recognition_request_values_to_protocol_encoder(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured_provider_arguments: dict[str, object] = {}
+    captured_encoder_arguments: dict[str, object] = {}
+
+    class CapturingLlamaCppExecutionProvider:
+        def __init__(self, **kwargs: object) -> None:
+            captured_provider_arguments.update(kwargs)
+
+    def capture_request(**kwargs: object) -> bytes:
+        captured_encoder_arguments.update(kwargs)
+        return b"encoded request"
+
+    monkeypatch.setattr(
+        application,
+        "LlamaCppExecutionProvider",
+        CapturingLlamaCppExecutionProvider,
+    )
+    monkeypatch.setattr(application, "encode_qwen_request", capture_request)
+
+    application.build_application()
+
+    request = RecognitionRequest(
+        segment_index=3,
+        audio_path=tmp_path / "segment-0003.wav",
+        recognition_context="earlier recognized text",
+        language="nl-NL",
+    )
+    encode_request = captured_provider_arguments["encode_request"]
+    assert callable(encode_request)
+    assert encode_request(request) == b"encoded request"
+    assert captured_encoder_arguments == {
+        "audio_path": request.audio_path,
+        "recognition_context": request.recognition_context,
+        "language": request.language,
+    }
+
+
+def test_qwen_response_wrapper_maps_ordered_protocol_tokens_to_provider_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured_provider_arguments: dict[str, object] = {}
+    protocol_result = QwenRecognitionResult(
+        tokens=(
+            QwenRecognitionToken(token_id=71, text="first", log_probability=-0.2),
+            QwenRecognitionToken(token_id=72, text=" second", log_probability=-1.3),
+        )
+    )
+
+    class CapturingLlamaCppExecutionProvider:
+        def __init__(self, **kwargs: object) -> None:
+            captured_provider_arguments.update(kwargs)
+
+    def decode_protocol_response(payload: bytes) -> QwenRecognitionResult:
+        assert payload == b"provider response"
+        return protocol_result
+
+    monkeypatch.setattr(
+        application,
+        "LlamaCppExecutionProvider",
+        CapturingLlamaCppExecutionProvider,
+    )
+    monkeypatch.setattr(application, "decode_qwen_response", decode_protocol_response)
+
+    application.build_application()
+
+    decode_response = captured_provider_arguments["decode_response"]
+    assert callable(decode_response)
+    result = decode_response(b"provider response")
+    assert isinstance(result, RecognitionResult)
+    assert all(isinstance(token, RecognitionToken) for token in result.tokens)
+    assert tuple(
+        (token.token_id, token.text, token.log_probability) for token in result.tokens
+    ) == ((71, "first", -0.2), (72, " second", -1.3))
 
 
 def test_application_recognizes_only_the_registered_baseline_model(tmp_path: Path) -> None:

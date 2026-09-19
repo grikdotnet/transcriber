@@ -45,7 +45,7 @@ def test_main_resolves_task_path_invokes_application_and_renders_progress_and_su
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    transcript = tmp_path / "task" / "transcripts-qwen3-asr-1.7b" / "transcript.txt"
+    transcript = tmp_path / "task" / "transcripts-qwen3-asr-1.7b" / "transcript.json"
     application = StubApplication(AsrSuccess(transcript=transcript, recognized_segments=2))
     _install_application(monkeypatch, application)
 
@@ -121,7 +121,7 @@ def test_main_passes_an_explicit_valid_language_to_the_application(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    transcript = tmp_path / "task" / "transcripts-qwen3-asr-1.7b" / "transcript.txt"
+    transcript = tmp_path / "task" / "transcripts-qwen3-asr-1.7b" / "transcript.json"
     application = StubApplication(AsrSuccess(transcript=transcript, recognized_segments=1))
     _install_application(monkeypatch, application)
 
@@ -190,7 +190,7 @@ def test_complete_supported_language_tag_grammar_reaches_application_resolution(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    transcript = tmp_path / "task" / "transcript.txt"
+    transcript = tmp_path / "task" / "transcript.json"
     application = StubApplication(AsrSuccess(transcript=transcript, recognized_segments=1))
     _install_application(monkeypatch, application)
 

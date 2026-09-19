@@ -13,6 +13,11 @@ from transcriber.infrastructure.asr_files import (
     publish_transcript,
     read_manifest_file,
 )
+from transcriber.infrastructure.execution_provider import (
+    RecognitionRequest,
+    RecognitionResult,
+    RecognitionToken,
+)
 from transcriber.infrastructure.ffmpeg import FfmpegProcess
 from transcriber.infrastructure.filesystem import AtomicFileWriter, WorkDirectory
 from transcriber.infrastructure.firered_ncnn import FireRedNcnnProcess
@@ -170,14 +175,36 @@ def build_application(*, progress: Callable[[AsrProgress], None] | None = None) 
             if not path.is_file()
         )
 
+    def encode_qwen_recognition_request(request: RecognitionRequest) -> bytes:
+        """Map one provider-neutral request into Qwen's request codec."""
+        return encode_qwen_request(
+            audio_path=request.audio_path,
+            recognition_context=request.recognition_context,
+            language=request.language,
+        )
+
+    def decode_qwen_recognition_response(payload: bytes) -> RecognitionResult:
+        """Map Qwen's ordered protocol tokens into provider-neutral tokens."""
+        qwen_result = decode_qwen_response(payload)
+        return RecognitionResult(
+            tokens=tuple(
+                RecognitionToken(
+                    token_id=token.token_id,
+                    text=token.text,
+                    log_probability=token.log_probability,
+                )
+                for token in qwen_result.tokens
+            )
+        )
+
     qwen_provider = LlamaCppExecutionProvider(
         executable=paths.llama_provider,
         model_path=paths.qwen_model_directory / qwen_artifacts["model"].path,
         audio_projector_path=paths.qwen_model_directory / qwen_artifacts["audio_projector"].path,
         process_starter=SubprocessManagedProcessStarter(),
         transport=HttpLoopbackTransport(extract_error_message=extract_qwen_error_message),
-        encode_request=encode_qwen_request,
-        decode_response=decode_qwen_response,
+        encode_request=encode_qwen_recognition_request,
+        decode_response=decode_qwen_recognition_response,
     )
 
     return Application(

@@ -63,14 +63,8 @@ _Avoid_: Transcript word, normalized unit
 **Normalization Span**:
 The maximal non-empty sequence of consecutive recognized Unicode code points between guaranteed
 NFKC normalization boundaries within one speech segment. Its normalized text carries the minimum
-probability of its contributing recognition tokens and the recognized language active for its
-first code point.
+probability of its contributing recognition tokens.
 _Avoid_: Unit, character, word
-
-**Recognized Language**:
-The most recent language value reported by an execution provider for following recognized text
-within one speech segment. The value is unknown until that speech segment reports a language.
-_Avoid_: Requested language, detected language
 
 **Transcript**:
 The ordered collection of scored normalization spans assembled from speech segments recognized in

@@ -65,8 +65,8 @@ define three distinct roles: Worker, Validator, and Orchestrator. Three roles fo
 The root process acts as an Orchestrator.
 Sub-agents MUST use the following model and reasoning-effort assignments:
 
-- Worker: `gpt-5.6-terra` with `light` reasoning effort.
-- Validator: `gpt-5.6-sol` with `light` reasoning effort.
+- Worker: `gpt-5.6-terra` with `low` reasoning effort.
+- Validator: `gpt-5.6-sol` with `low` reasoning effort.
 
 Each separate task MUST receive a newly created Worker and a newly created Validator. Both agents
 MUST start the task with clean context windows containing only the task-specific context and
