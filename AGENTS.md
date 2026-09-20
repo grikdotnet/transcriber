@@ -12,11 +12,12 @@ This repository uses the single-context domain documentation layout. See `docs/a
 
 ## Language
 
-- Prefer entity names over pronouns. Use a pronoun only when the pronoun's referent is clear.
+- Prefer entity names over pronouns.
 
-- Use unambiguous phrases. Examples:
+- Use unambiguous explicit phrases. Examples:
 Instead of "terminal command" write either "CLI command" or "terminating command," according to the intended meaning.
 
-Instead of "Should the provider operation receive context?" write clear: "Should the ASR provider's recognize() method receive context?"
+Instead of unconventional lexic: "project-owned internal collaborators" use commonly used terms: "components that another component calls".
 
-Instead of unconventional lexic: "project-owned internal collaborators" use commonly used terms: "components that another component calls"
+Avoid overloaded lexical constructions, e.g.: "specification-required system-level verification".
+Better: "tests that the specification requires, involve system service or hardware".
