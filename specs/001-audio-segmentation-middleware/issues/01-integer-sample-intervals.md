@@ -172,7 +172,7 @@ No changes are required in:
 - `src/transcriber/protocol/firered_probabilities.py`: the required frame
   constants already exist.
 - `third_party/firered-vad/**`: vendored code and hashes remain unchanged.
-- `specs/001-local-audio-transcription/**`: the feature specification remains
+- `specs/001-audio-segmentation-middleware/**`: the feature specification remains
   unchanged.
 
 **Acceptance criteria:** All adapter tests pass; ordinary boundaries remain

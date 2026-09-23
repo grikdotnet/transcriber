@@ -2,7 +2,7 @@
 
 **Branch**: `codex/media-audio-segmentation` | **Date**: 2026-09-04 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `specs/001-local-audio-transcription/spec.md`
+**Input**: Feature specification from `specs/001-audio-segmentation-middleware/spec.md`
 
 ## Summary
 
@@ -53,7 +53,7 @@ Independent validation accepted Phase 0 in cycle 1 after the corrections above. 
 ### Documentation (this feature)
 
 ```text
-specs/001-local-audio-transcription/
+specs/001-audio-segmentation-middleware/
 ├── plan.md
 ├── research.md
 ├── data-model.md
@@ -261,7 +261,7 @@ Every normative requirement is assigned to an implementation workstream and a de
 
 ### TDD evidence rule
 
-For every behavioral workstream, the Worker records: `(1)` the focused test command failing for the intended missing behavior, `(2)` the minimal production change, and `(3)` the same focused test plus relevant regression suite passing. Each evidence-producing gate writes its own file under `specs/001-local-audio-transcription/evidence/`; the final aggregation task creates `implementation-evidence.md` from those immutable task records. A Validator rejects work without red/green evidence. Refactoring occurs only after green and ends with the same tests green.
+For every behavioral workstream, the Worker records: `(1)` the focused test command failing for the intended missing behavior, `(2)` the minimal production change, and `(3)` the same focused test plus relevant regression suite passing. Each evidence-producing gate writes its own file under `specs/001-audio-segmentation-middleware/evidence/`; the final aggregation task creates `implementation-evidence.md` from those immutable task records. A Validator rejects work without red/green evidence. Refactoring occurs only after green and ends with the same tests green.
 
 ### Test layers
 

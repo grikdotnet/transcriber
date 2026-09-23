@@ -11,7 +11,7 @@ This delivery supports the CLI only. It does not provide a GUI, API, worker mode
 - a host-built `vendor/firered-vad-ncnn`
 - FireRedVAD model and CMVN assets in `models/firered-vad.ncnn/`
 
-The native provider build is only for Media Preparation and requires a local static NCNN `20260113` installation. It is not an ASR Execution Provider build. See the [quickstart](specs/001-local-audio-transcription/quickstart.md) for the offline Media Preparation build and validation commands.
+The native provider build is only for Media Preparation and requires a local static NCNN `20260113` installation. It is not an ASR Execution Provider build. See the [quickstart](specs/001-audio-segmentation-middleware/quickstart.md) for the offline Media Preparation build and validation commands.
 
 ## Run the CLI
 
@@ -44,7 +44,7 @@ On success, the command prints exactly four lines identifying the task directory
 `fixtures/sample/prepared.wav` is the supplied integration sample. Its accompanying `fixtures/sample/manifest.json` and historical segment WAVs are diagnostic references only: their segment count and boundaries are not an acceptance oracle for FireRedVAD output. See the [fixture notes](fixtures/sample/README.md) for provenance and reference-data details.
 
 For all arguments, flags, exit statuses, and execution examples, see the [CLI reference](docs/cli.md).
-For complete setup, acceptance, failure-path, and artifact-inspection commands, follow the [quickstart and validation guide](specs/001-local-audio-transcription/quickstart.md).
+For complete setup, acceptance, failure-path, and artifact-inspection commands, follow the [quickstart and validation guide](specs/001-audio-segmentation-middleware/quickstart.md).
 
 ## Segment speech recognition
 
