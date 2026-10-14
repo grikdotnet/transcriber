@@ -1,9 +1,10 @@
 <!--
 Sync Impact Report
-- Version change: 2.1.0 -> 2.2.0
+- Version change: 2.2.0 -> 2.3.0
 - Modified principles: None
 - Modified sections:
-  - Planning rules (mandatory independently reviewable task granularity)
+  - Sub-agents (updated Worker and Validator model/reasoning assignments)
+  - Governance metadata (amendment approved by the project owner on 2026-10-14)
 - Added sections: None
 - Removed sections: None
 - Follow-up TODOs: None
@@ -63,8 +64,8 @@ Prefer to divide implementation into sub-agent tasks with safe parallelization b
 The root process acts as an Orchestrator.
 Sub-agents MUST use the following model and reasoning-effort assignments:
 
-- Worker: `gpt-5.6-terra` with `medium` reasoning effort.
-- Validator: `gpt-5.6-sol` with `low` reasoning effort.
+- Worker: `gpt-6.1-sol` with `low` reasoning effort.
+- Validator: `gpt-6.1-sol` with `medium` reasoning effort.
 
 Each separate task MUST receive a newly created Worker and a newly created Validator. Both agents
 MUST start the task with clean context windows containing only the task-specific context and
@@ -104,4 +105,4 @@ Amendments MUST document their motivation, affected principles, impact, migratio
 
 Every implementation plan and code review MUST check constitution compliance. Reviewers MUST reject work lacking automated verification, task traceability, required architecture classification, or deterministic verification. Evidence of executing a test before implementation is NOT required. Complexity and claimed deviations MUST be resolved through a constitution amendment or design change; informal exceptions are forbidden.
 
-**Version**: 2.2.0 | **Ratified**: 2026-07-30 | **Last Amended**: 2026-09-19
+**Version**: 2.3.0 | **Ratified**: 2026-07-30 | **Last Amended**: 2026-10-14

@@ -71,3 +71,27 @@ The ordered collection of scored normalization spans assembled from speech segme
 Segment Manifest order. Text is derived by concatenating the spans' normalized text rather than
 stored as a second source of truth.
 _Avoid_: ASR output, transcription result
+
+**Diarization**:
+The assignment of speaker identities to speech regions on the complete Canonical Audio timeline.
+_Avoid_: Speaker recognition, transcription alignment
+
+**Diarization Task**:
+One attempt to assign speaker identities across Canonical Audio and correct the speaker activity using the prepared speech regions.
+_Avoid_: Diarization job, transcription task
+
+**Speaker Activity**:
+A time interval on Canonical Audio assigned to one recording-local speaker identity. Different speaker identities may have simultaneous activity.
+_Avoid_: Utterance, Speech Segment
+
+**Diarization Fusion**:
+The combination that preserves the base prediction's active speakers and fills eligible empty regions from a second prediction after aligning speaker identities.
+_Avoid_: Voting, speaker averaging
+
+**Speaker Mapping Evidence**:
+Agreement between two diarization predictions that supports or rejects a proposed recording-local identity correspondence.
+_Avoid_: Speaker confidence, correctness probability
+
+**Added Speaker Activity**:
+Speaker activity contributed by the second prediction in regions where the base prediction contains no speaker activity.
+_Avoid_: New speaker, corrected speaker

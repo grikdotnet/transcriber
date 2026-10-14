@@ -14,10 +14,11 @@ This repository uses the single-context domain documentation layout. See `docs/a
 
 - Prefer entity names over pronouns.
 
-- Use unambiguous explicit phrases. Examples:
-Instead of "terminal command" write either "CLI command" or "terminating command," according to the intended meaning.
+- Use unambiguous phrases. Examples:
+Instead of "terminal command" write either "CLI command" or "terminating command," because "terminal command" is ambiguous.
+Bad: "Retain second-valued timestamps" because "second-valued" is ambiguous; good: "Keep timestamps in seconds".
 
-Instead of unconventional lexic: "project-owned internal collaborators" use commonly used terms: "components that another component calls".
+Instead of unconventional lexic like "project-owned internal collaborators" use common terms: "components that another component calls".
 
-Avoid overloaded lexical constructions, e.g.: "specification-required system-level verification".
-Better: "tests that the specification requires, involve system service or hardware".
+Avoid overloaded lexical constructions, e.g.: "specification-required system-level verification";
+better: "tests that the specification requires, involve system service or hardware".
