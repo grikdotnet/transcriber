@@ -52,3 +52,14 @@ def test_console_entry_point_loads_a_callable() -> None:
     )
 
     assert callable(entry_point.load())
+
+
+def test_diarization_entry_point_preserves_dependency_configuration() -> None:
+    metadata = tomllib.loads((REPOSITORY_ROOT / 'pyproject.toml').read_text())
+    assert metadata['project']['scripts']['transcriber-diarize'] == (
+        'transcriber.controller.diarization_cli:main')
+    assert 'numpy==2.4.2' in metadata['project']['dependencies']
+    assert 'pyannote-ncnn-plda==0.1.0' in metadata['project']['dependencies']
+    assert metadata['tool']['uv']['override-dependencies'] == ['numpy==2.4.2']
+    assert metadata['tool']['uv']['sources']['pyannote-ncnn-plda']['rev'] == (
+        '34c8982e243eda9e42834ed255067ab727410379')

@@ -1,6 +1,6 @@
 # Fused Diarization Validation Guide
 
-Run from the repository root with the existing locked Python 3.12 environment. Commands below validate the completed feature; they are not claimed to pass before implementation.
+Run from the repository root with the existing locked Python 3.12 environment. The recorded verification below covers the implemented feature.
 
 ## Prerequisites
 
@@ -52,10 +52,39 @@ The first requests CPU NeMo and Vulkan secondary execution. The second exits wit
 
 ## Required real integration checkpoint
 
-After implementation introduces the marker/required flag:
+Run the required marker and flag together:
 
 ```bash
 uv run pytest -m real_diarization --real-diarization-required -q
 ```
 
 Run on a host exposing the selected GPU APIs; the Codex sandbox may not expose Metal devices. Checkpoint scenarios explicitly invoke both real adapters and their boundary mappings. The Community-1 adapter checkpoint can supply a controlled valid speaker count to test count propagation without asserting Nemotron's model accuracy. An empty-mask or zero/one-speaker workflow result cannot substitute for that secondary adapter checkpoint. Missing prerequisites or fallback fail required two-engine verification. Test first-party calls, arguments, result mapping and ownership; do not assert exact model/reference agreement.
+
+
+## Recorded final verification — 2026-10-14
+
+The final controlled run used the existing environment without synchronization:
+
+```bash
+UV_CACHE_DIR=/tmp/transcriber-uv-cache uv run --no-sync pytest -m 'not real_vad and not real_asr and not real_diarization' -q
+UV_CACHE_DIR=/tmp/transcriber-uv-cache uv run --no-sync ruff check .
+UV_CACHE_DIR=/tmp/transcriber-uv-cache uv run --no-sync mypy src
+UV_CACHE_DIR=/tmp/transcriber-uv-cache uv lock --check
+```
+
+Results: **931 passed, 14 deselected in 3.21s**; Ruff passed; mypy passed for **44 source files**; the lock check resolved **31 packages** successfully. The controlled run includes existing preparation, ASR and recursive architecture checks; no separate duplicate regression suite was needed.
+
+The Orchestrator ran the required checkpoint on the host with the existing Vulkan driver selection:
+
+```bash
+VK_DRIVER_FILES=$PWD/.venv/share/vulkan/icd.d/ncnn_moltenvk.json UV_CACHE_DIR=/tmp/transcriber-uv-cache uv run --no-sync pytest -m real_diarization --real-diarization-required -q
+```
+
+Result: **2 passed, 943 deselected in 17.09s**. Both actual adapters and Composition mappings completed, using NeMo GPU 0, Vulkan GPU 0 and Community-1 minimum/maximum speaker bounds of 2. Sandbox device unavailability does not invalidate this successful host checkpoint. The checkpoint verifies invocation, settings, mapping and ownership, without asserting model accuracy.
+
+The installed console command was also verified with `uv run --locked transcriber-diarize --help`; only the local transcriber package was rebuilt, with no engine installation. See [task evidence](tasks.md#final-criteria-and-scope-review) for requirement and acceptance traceability.
+
+
+### Convergence verification — 2026-10-14
+
+After T018/T019 corrected exception-traceback resource retention, the same controlled commands passed: **975 tests passed, 14 deselected in 2.78s**; Ruff, mypy (44 source files) and lock validation passed. The required real checkpoint rerun on the host passed both adapters: **2 passed, 987 deselected in 0.82s**. See [Phase 8 completion evidence](tasks.md#phase-8-completion-evidence--2026-10-14) for independent review and regression details.

@@ -2,6 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import NDArray
 
 import pytest
 
@@ -88,8 +93,10 @@ def enforce_real_asr_prerequisites(paths: RealAsrPaths, *, required: bool) -> No
     missing = paths.missing_prerequisites()
     if not missing:
         return
-    prefix = "required real ASR prerequisite is unavailable: " if required else (
-        "real ASR prerequisite is unavailable: "
+    prefix = (
+        "required real ASR prerequisite is unavailable: "
+        if required
+        else ("real ASR prerequisite is unavailable: ")
     )
     detail = _bounded_missing_prerequisite_detail(missing, 1_023 - len(prefix))
     if required:
@@ -107,6 +114,12 @@ def _bounded_missing_prerequisite_detail(paths: tuple[Path, ...], maximum_length
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.getgroup("real-diarization").addoption(
+        "--real-diarization-required",
+        action="store_true",
+        default=False,
+        help="fail when actual two-engine diarization cannot run",
+    )
     group = parser.getgroup("real-vad")
     group.addoption(
         "--real-vad-required",
@@ -141,3 +154,38 @@ def real_asr_paths(request: pytest.FixtureRequest) -> RealAsrPaths:
         required=bool(request.config.getoption("--real-asr-required")),
     )
     return paths
+
+
+def enforce_real_diarization_available(detail: str | None, *, required: bool) -> None:
+    """Missing capabilities skip optional runs and fail the required checkpoint."""
+    if detail is None:
+        return
+    message = f"real Diarization prerequisite/runtime is unavailable: {detail}"[:1023]
+    if required:
+        pytest.fail("required " + message, pytrace=False)
+    pytest.skip(message)
+
+
+@pytest.fixture(scope="session")
+def real_diarization_audio(request: pytest.FixtureRequest) -> NDArray[np.float32]:
+    """Read a representative ten seconds of the supplied canonical speech audio."""
+    import wave
+
+    import numpy as np
+
+    sample = Path(__file__).resolve().parents[1] / "fixtures/sample/prepared.wav"
+    required = bool(request.config.getoption("--real-diarization-required"))
+    enforce_real_diarization_available(
+        None if sample.is_file() else f"missing supplied audio: {sample}",
+        required=required,
+    )
+    with wave.open(str(sample), "rb") as source:
+        assert (source.getnchannels(), source.getsampwidth(), source.getframerate()) == (
+            1,
+            2,
+            16000,
+        )
+        pcm = source.readframes(10 * 16000)
+    samples = np.frombuffer(pcm, dtype="<i2").astype(np.float32) / np.float32(32768)
+    assert samples.size and samples.flags.owndata and samples.flags.c_contiguous
+    return samples

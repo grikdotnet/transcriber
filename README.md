@@ -2,7 +2,7 @@
 
 Local command-line middleware that extracts one audio stream from a media file with the bundled `vendor/ffmpeg`, runs the local non-streaming FireRedVAD NCNN provider, and writes a manifest plus speech-focused WAV segments.
 
-This delivery supports the CLI only. It does not provide a GUI, API, worker mode, speaker diarization, or model downloading.
+This delivery supports separate CLI commands for Media Preparation, segment speech recognition, and speaker diarization. It does not provide a GUI, API, worker mode, or model downloading.
 
 ## Requirements
 
@@ -92,3 +92,30 @@ Execution Provider: the fixed supplied ASR prerequisites require no download or 
 See the [ASR CLI contract](specs/002-segment-asr/contracts/cli.md) for command behavior and the
 [structured Transcript contract](specs/003-normalized-token-json/contracts/transcript-json.md) for
 publication rules.
+
+## Speaker diarization
+
+After Media Preparation succeeds, run the independent command on the existing task directory:
+
+```bash
+uv run transcriber-diarize /tmp/transcriber-jobs/sample-task \
+  --nemo-gpu-index 0 --vulkan-gpu-index 0
+```
+
+Both GPU indices default to `0`. NeMo accepts `-1` for CPU or a nonnegative ggml GPU index;
+Community-1 requires a nonnegative NCNN Vulkan index. The two runtimes enumerate devices
+independently. The command uses the preinstalled NeMo C library, Nemotron GGUF and Community-1
+Python library, eight model files, SciPy solver and Vulkan device described in the
+[runtime guide](docs/diarization-runtime-setup.md). The command installs nothing and starts
+neither Media Preparation nor ASR; the GUI owns sequencing and work-directory concurrency.
+
+Nemotron supplies recording-local speaker identities. Community-1 can fill supported gaps after
+full-recording identity matching; the final activity is restricted to the exact union of persisted
+Speech Segment intervals, with no added collar. An empty union skips all engines; zero or one
+observed Nemotron identity skips Community-1 and fusion. Recoverable Community-1 failures warn
+and produce masked Nemotron-only activity. Nemotron failure, cancellation, fusion/mask failure,
+cleanup failure and publication failure remain fatal.
+
+Success ends with `diarization=/absolute/path/to/sample-task/diarization.json`. This is the only
+published diarization artifact; the compact JSON stores speaker IDs and sample bounds at 16 kHz.
+See the [CLI reference](docs/cli.md#transcriber-diarize) for stages, statuses and examples.

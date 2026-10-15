@@ -12,15 +12,24 @@ license = { file = "LICENSE" }
 dependencies = [
   "numpy==2.4.2",
   "PyICU==2.16.2",
+  "pyannote-ncnn-plda==0.1.0",
 ]
 
+[tool.uv]
+override-dependencies = ["numpy==2.4.2"]
+
+[tool.uv.sources]
+pyannote-ncnn-plda = { git = "https://github.com/grikdotnet/pyannote-community1-plda-vbx.git", rev = "34c8982e243eda9e42834ed255067ab727410379" }
+
 [project.scripts]
+transcriber-diarize = "transcriber.controller.diarization_cli:main"
 transcriber-prepare = "transcriber.controller.cli:main"
 transcriber-asr = "transcriber.controller.asr_cli:main"
 
 [dependency-groups]
 dev = [
   "mypy==1.19.1",
+  "ninja==1.13.2",
   "pytest==9.0.2",
   "ruff==0.15.5",
 ]
@@ -36,6 +45,7 @@ addopts = "--strict-config --strict-markers --import-mode=importlib"
 pythonpath = ["."]
 testpaths = ["tests"]
 markers = [
+  "real_diarization: requires both installed native diarization engines and GPU APIs",
   "real_vad: requires the local native FireRedVAD provider and supplied model assets",
   "real_asr: requires the local llama.cpp provider and supplied Qwen ASR model assets",
 ]

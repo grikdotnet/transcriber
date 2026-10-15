@@ -83,10 +83,24 @@ manifest.write_text(json.dumps({
 PY
 ```
 
-## Verification and remaining assets
+## Verification and current asset availability
 
 - Native build/install and CLI help/version succeeded; the C API library loads through Python `ctypes`.
 - A five-second fixture excerpt was processed successfully with the existing Nemotron GGUF on Metal, producing JSON speaker intervals.
 - Python dependency imports, a SciPy assignment call, and `uv lock --check` passed. The four existing package-metadata tests passed.
 - NCNN Vulkan detected GPU 0, Apple M5, without duplicate driver loading when using the manifest. GPU checks ran outside the Codex sandbox, which does not expose Metal devices.
-- Community-1 weights are not installed under `models/pyannote-community1/`. Full Community-1 inference remains unverified until those separate assets are supplied; library installation and GPU discovery are verified.
+
+## Application command prerequisites
+
+`transcriber-diarize` uses the installed C API library at
+`vendor/nemo-speech/install/lib/libnemo_speech_asr_c.dylib`, the model at
+`models/Nemotron-3-Diarization.q8_0.gguf`, and the eight Community-1 files listed above. These paths resolve from the application installation, independently of the caller's working directory.
+Community-1 additionally requires the pinned `pyannote-ncnn-plda` library and its dependencies, SciPy's assignment solver, and a usable NCNN Vulkan device. The supported initial target is this macOS ARM64 installation. Runtime and model provisioning are external prerequisites: the command does not build, install, download, resolve packages or create Vulkan driver manifests.
+
+```bash
+uv run transcriber-diarize /tmp/transcriber-jobs/sample-task \
+  --nemo-gpu-index 0 --vulkan-gpu-index 0
+```
+
+Both indices default to `0`. NeMo accepts `-1` for CPU and nonnegative indices in ggml's device enumeration; Community-1 accepts only nonnegative indices in NCNN's independent Vulkan enumeration. A working NeMo GPU selection does not establish that the same NCNN index is valid.
+An unusable NeMo device fails the command. An unusable Community-1 device produces the documented warning and masked Nemotron-only fallback when the secondary branch is attempted, without a CPU retry. Empty masks skip all runtime checks; zero or one observed Nemotron identity skips secondary checks. See the [CLI reference](cli.md#transcriber-diarize) for exact masking, output and failure rules, and the [required checkpoint procedure](../specs/004-diarization/quickstart.md) for actual adapter verification.
